@@ -69,11 +69,11 @@ export default async function handler(req, res){
             return;
         }
 
-        if (data.current_schedule == undefined || data.preschedule == undefined || data.current_schedule.avoid_times == undefined) {
+        if (data.avoid_times == undefined || data.preschedule == undefined) {
             res.status(406).json({error_msg: "Body must contain 'current_schedule', 'current_schedule.avoid_times', and 'preschedule'!"});
             return;
         }
-        const avoid_times = data.current_schedule.avoid_times, preschedule = data.preschedule;
+        const avoid_times = data.avoid_times, preschedule = data.preschedule;
         if (avoid_times.length != 5){
             res.status(406).json({error_msg: "Malformatted avoid_times: Must have an entry for each day."});
             return;

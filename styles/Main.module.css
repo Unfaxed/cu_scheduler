@@ -76,10 +76,9 @@
 .card{
     background-color: #37373f;
     border-radius: 4px;
-    min-height: 45px;
-    width: calc(100% - 10px);
-    padding: 5px;
-    padding-top: 17px;
+    min-height: 40px;
+    width: 100%;
+    padding-top: 10px;
 }
 
 .chip{

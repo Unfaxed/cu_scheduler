@@ -17,6 +17,7 @@ import React from "react";
 import Popup from "../comps/Popup";
 import ListElement from "../comps/ListElement";
 import { CUtoModelTime, ModelToCUTime } from "../lib/cu_utils";
+import { sha256 } from "js-sha256"
 
 export function getServerSideProps(context){
     return {
@@ -49,6 +50,7 @@ export default function Index({analytics}) {
     const [menu_shown, setMenuShown] = useState(true);
     const [show_menu_x, setShowMenuXButton] = useState(false);
     const [checklist_selected, setChecklistSelected] = useState([]); 
+    const [results_cache, setResultsCache] = useState({});
 
     useEffect(() => {
         if (typeof window == "undefined") return;
@@ -264,43 +266,54 @@ export default function Index({analytics}) {
             setSubmitted(false);
             return;
         }
-        setLoading(true);
-
-        const res1 = await fetch("/api/optimizer", {
-            method: "POST",
-            body: JSON.stringify({
-                current_schedule: schedule,
-                preschedule,
-                min_enroll_count: preschedule.length,
-            })
+        
+        const params = JSON.stringify({
+            avoid_times: schedule.avoid_times,
+            preschedule
         });
-        const res = await res1.json();
+
+        const hash = sha256(params);
+        var res;
+        if (results_cache[hash] != undefined){
+            res = results_cache[hash];
+        } else {
+            setLoading(true);
+            const res1 = await fetch("/api/optimizer", {
+                method: "POST",
+                body: params
+            });
+            res = await res1.json();
+
+            if (res1.status != 200 || res.schedules == undefined){
+                console.error(res.error_msg);
+                setLoading(false);
+                setStatusText("❌ There was an error!");
+                return;
+            }
+
+            results_cache[hash] = res;
+            setResultsCache(results_cache);
+        }
         setLoading(false);
 
-        if (res1.status == 200 && res.schedules != undefined){
+        if (!res.conflictions) {
+            const s = {classes: res.schedules[0].classes};
+            s.avoid_times = schedule.avoid_times;
+            setFullScheduleSet(res.schedules);
+            setSelectedScheduleIndex(0);
+            setSchedule(s);
+            setSubmitted(true);
+            setStatusText("✅ Created schedule");
 
-            if (!res.conflictions) {
-                const s = {classes: res.schedules[0].classes};
-                s.avoid_times = schedule.avoid_times;
-                setFullScheduleSet(res.schedules);
-                setSelectedScheduleIndex(0);
-                setSchedule(s);
-                setSubmitted(true);
-                setStatusText("✅ Created schedule");
-
-                if (conflict_class != null){
-                    if (prescheduleClassCount(preschedule, conflict_class) == 0) setConflictingClass(null);
-                }
-
-            } else {
-                setStatusText("❌ Impossible to fit this class!");
-                setSubmitted(false);
-                setSchedule({classes: [], avoid_times: schedule.avoid_times});
-                if (lastAddedClass != null) setConflictingClass(lastAddedClass.toUpperCase());
+            if (conflict_class != null){
+                if (prescheduleClassCount(preschedule, conflict_class) == 0) setConflictingClass(null);
             }
+
         } else {
-            console.error(res.error_msg);
-            setStatusText("❌ There was an error!");
+            setStatusText("❌ Impossible to fit this class!");
+            setSubmitted(false);
+            setSchedule({classes: [], avoid_times: schedule.avoid_times});
+            if (lastAddedClass != null) setConflictingClass(lastAddedClass.toUpperCase());
         }
     }
 
@@ -338,7 +351,7 @@ export default function Index({analytics}) {
                         ))}
                     </div>)}
                     <div style={{marginTop: "15px"}}>
-                        <div className={styles.card} style={preschedule.length == 0 ? {} : {padding: 0}}>
+                        <div className={styles.card} style={preschedule.length == 0 ? {} : {paddingTop: 0}}>
                             {preschedule.map((cl, i) => (
                                 <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClose={() => removePrescheduleClass(cl)}></ListElement>
                             ))}
