@@ -73,6 +73,15 @@
     fill-opacity: 0.35;
 }
 
+.card{
+    background-color: #37373f;
+    border-radius: 4px;
+    min-height: 45px;
+    width: calc(100% - 10px);
+    padding: 5px;
+    padding-top: 17px;
+}
+
 .chip{
     /*style={{backgroundColor: "#e2e2e2", margin: "2px", marginLeft: "0", fontSize: "8pt"}}*/
     background-color: #e2e2e2;
@@ -106,8 +115,8 @@
     width: 100%;
     margin-top: 15px;
     border-radius: 3px;
-    min-height: 140px;
-    max-height: 300px;
+    min-height: 100px;
+    max-height: 250px;
     overflow-y: auto;
     font-size: 14pt;
     background-color: #37373f;
@@ -117,14 +126,8 @@
     padding: 10px;
     cursor: pointer;
 }
-.class_suggestion_a{
-    background-color: #37373f;
-}
-.class_suggestion_a:hover{
-    background-color: #44444b;
-}
-.class_suggestion_b:hover{
-    background-color: #44444b;
+.class_suggestion:hover{
+    background-color: rgb(63, 63, 71);
 }
 
 .class_list_chips{
@@ -146,6 +149,21 @@
     font-size: 12pt;
     margin-top: 15px;
     padding: 10px;
+}
+
+.list_element{
+    min-height: 40px;
+    color: #FFF;
+    padding: 17px;
+    padding-bottom: 0;
+    cursor: pointer;
+    position: relative;
+}
+.list_element:hover{
+    border-left: 5px solid #FFF;
+    padding-left: 13px;
+    background-color: rgb(63, 63, 71);
+    transition: ease-in-out all 150ms;
 }
 
 .popup_container{

@@ -15,6 +15,7 @@ import { name_map } from "lib/json/name_map.js";
 import { Card, Checkbox, FormControlLabel, CardContent, MenuItem, CardActionArea, Typography, Grid, FormHelperText } from "@mui/material";
 import React from "react";
 import Popup from "../comps/Popup";
+import ListElement from "../comps/ListElement";
 import { CUtoModelTime, ModelToCUTime } from "../lib/cu_utils";
 
 export function getServerSideProps(context){
@@ -45,7 +46,6 @@ export default function Index({analytics}) {
     const [selected_schedule_index, setSelectedScheduleIndex] = useState(0);
     const [conflict_class, setConflictingClass] = useState(null);
     const [checklist_visible, setChecklistVisible] = useState(false);
-    const [donations_shown, setDonationsShown] = useState(false);
     const [menu_shown, setMenuShown] = useState(true);
     const [show_menu_x, setShowMenuXButton] = useState(false);
     const [checklist_selected, setChecklistSelected] = useState([]); 
@@ -303,6 +303,9 @@ export default function Index({analytics}) {
             setStatusText("❌ There was an error!");
         }
     }
+
+    //old chip:
+    //<Chip key={"class-chip-" + i} label={cl.title+ " " + cl.type} variant="filled" onDelete={() => removePrescheduleClass(cl)} sx={{bgcolor: (conflict_class != null && conflict_class.toLowerCase() == cl.title.toLowerCase()) ? "red" : "white", marginRight: "3px", marginBottom: "3px"}}></Chip>
     
     return(
         <>
@@ -334,59 +337,23 @@ export default function Index({analytics}) {
                             </div>
                         ))}
                     </div>)}
-                    {donations_shown && (<div style={{marginTop: "15px"}}>
-                        <Card style={{background: "#37373f", color: "#FFF", padding: "10px"}}>
-                            <div style={{fontSize: "11pt"}}>
-                                <div>
-                                    🎉This project was made by a CU Boulder student. If this tool was helpful to you, please donate to show your support!
-                                </div>
-                            </div>
-                            <div style={{display: "flex", justifyContent: "cener", alignItems: 'center', textAlign: 'center'}}>
-                                <a href="https://paypal.me/c7dev/5" target="_blank"><Chip label="$5" variant="filled" sx={{bgcolor: "white", cursor: "pointer", marginRight: "7px"}}></Chip></a>
-                                <a href="https://paypal.me/c7dev/7" target="_blank"><Chip label="$7" variant="filled" sx={{bgcolor: "white", cursor: "pointer", marginRight: "7px"}}></Chip></a>
-                                <a href="https://paypal.me/c7dev/10" target="_blank"><Chip label="$10" variant="filled" sx={{bgcolor: "white", cursor: "pointer", marginRight: "7px"}}></Chip></a>
-                                <a href="https://paypal.me/c7dev" target="_blank"><Chip label="Custom" variant="filled" sx={{bgcolor: "white", cursor: "pointer", marginRight: "7px"}}></Chip></a>
-                            </div>
-                        </Card>
-                    </div>)}
                     <div style={{marginTop: "15px"}}>
-                        <Card style={{background: "#37373f"}}>
-                            <CardContent>
-                                <div style={{display: "flex", flexWrap: "wrap"}}>
-                                {preschedule.map((cl, i) => (
-                                    <Chip key={"class-chip-" + i} label={cl.title+ " " + cl.type} variant="filled" onDelete={() => removePrescheduleClass(cl)} sx={{bgcolor: (conflict_class != null && conflict_class.toLowerCase() == cl.title.toLowerCase()) ? "red" : "white", marginRight: "3px", marginBottom: "3px"}}></Chip>
-                                ))}
-                                {preschedule.length == 0 && (<div style={{paddingLeft: "5px"}}>
-                                    <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Search your classes to begin</span>
-                                </div>)}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div style={{marginTop: "15px"}}>
-                        <Card style={{backgroundColor: "#37373f", color: "#FFF", padding: "10px"}}>
-                            <Typography style={{marginBottom: "7px"}}>Avoid Times</Typography>
-                            {UTCount(schedule.avoid_times) == 0 ? (
-                            <div style={{paddingLeft: "5px"}}>
-                                <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Click on the schedule to add a time</span>
-                            </div>) : 
-                            (<div style={{display: "flex", flexWrap: "wrap", marginTop: "8px"}}>
-                                {schedule.avoid_times.map((ut_set, day) => (
-                                    <React.Fragment key={"ut-chip-day-" + day}>
-                                        {ut_set.map((ut, i) => (
-                                            <Chip label={timeString(day, ut[0], ut[1])} key={"ut-chip-" + i} variant="filled" onDelete={()=> {
-                                                removeUT(day, i);
-                                            }} sx={{bgcolor: "white", marginBottom: "3px"}}></Chip>
-                                        ))}
-                                    </React.Fragment>
-                                ))}
+                        <div className={styles.card} style={preschedule.length == 0 ? {} : {padding: 0}}>
+                            {preschedule.map((cl, i) => (
+                                <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClose={() => removePrescheduleClass(cl)}></ListElement>
+                            ))}
+                            {preschedule.length == 0 && (<div style={{paddingLeft: "5px"}}>
+                                <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Search your classes to begin</span>
                             </div>)}
-                        </Card>
+                        </div>
+                    </div>
+                    <div style={{marginTop: "15px", marginLeft: "5px"}}>
+                        <span style={{fontSize: "9pt", color: "rgba(255, 255, 255, 0.5)"}}>Click the schedule to set unavailable times</span>
                     </div>
 
                 </div>
                 <div className={styles.menu1_submit}>
-                    <div style={{position: "absolute", top: "-30px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
+                    <div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
                         <center>
                             <span><b>{status_message}</b></span>
                         </center>
@@ -425,7 +392,7 @@ export default function Index({analytics}) {
                 </div>
             </div>
         </div>
-        <Popup setVisible={setChecklistVisible} onClose={() => {if (schedule.classes.length >= 4) setDonationsShown(true)}} visible={checklist_visible}>
+        <Popup setVisible={setChecklistVisible} visible={checklist_visible}>
             <div className={styles.checklist_container}>
                 <div style={{marginBottom: "20px"}}>Registration Checklist:</div>
             {groupScheduleClasses(schedule.classes).map((checklist, i) => (
