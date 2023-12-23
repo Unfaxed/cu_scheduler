@@ -1,14 +1,10 @@
 
 import Head from "next/head.js";
-import { getPreScheduleClass } from "lib/cu_utils.js";
 import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import Chip from "@mui/material/Chip";
 import styles from "styles/Main.module.css";
 import Image from "next/image";
-import { preschedule_json } from "lib/json/preschedule.js";
-import { example_schedule } from "lib/json/example_schedule.js";
 import {renderScheduleSVG, isRangeIntersectionSingle, timeString, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
 import { lookup_map } from "lib/json/lookup_map.js";
 import { name_map } from "lib/json/name_map.js";
@@ -16,7 +12,7 @@ import { Card, Checkbox, FormControlLabel, CardContent, MenuItem, CardActionArea
 import React from "react";
 import Popup from "../comps/Popup";
 import ListElement from "../comps/ListElement";
-import { CUtoModelTime, ModelToCUTime } from "../lib/cu_utils";
+import BackArrow from "../comps/BackArrow";
 import { sha256 } from "js-sha256"
 
 export function getServerSideProps(context){
@@ -51,6 +47,7 @@ export default function Index({analytics}) {
     const [show_menu_x, setShowMenuXButton] = useState(false);
     const [checklist_selected, setChecklistSelected] = useState([]); 
     const [results_cache, setResultsCache] = useState({});
+    const [class_submenu, setClassSubmenu] = useState(null);
 
     useEffect(() => {
         if (typeof window == "undefined") return;
@@ -340,7 +337,10 @@ export default function Index({analytics}) {
                 {show_menu_x && (<div style={{position: "absolute", top: "10px", right: "-30px", cursor: "pointer"}} onClick={() => {setMenuShown(false); setUTCreatorStart(null); setUTCreatorEnd(null)}}>
                     <Image src="/icons/close.png" alt="Close Menu" width="21" height="21"></Image>
                 </div>)}
+
+
                 <div className={styles.menu1_settings}>
+                    {class_submenu == null ? (<>
                     <TextField fullWidth label="Enter your classes" sx={{input: {color: "white", background: "#37373f"}}} id="class-search"></TextField>
                     
                     {class_suggestions.length > 0 && (<div className={styles.class_suggestions}>
@@ -353,7 +353,7 @@ export default function Index({analytics}) {
                     <div style={{marginTop: "15px"}}>
                         <div className={styles.card} style={preschedule.length == 0 ? {} : {paddingTop: 0}}>
                             {preschedule.map((cl, i) => (
-                                <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClose={() => removePrescheduleClass(cl)}></ListElement>
+                                <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClick={() => setClassSubmenu(i)} onClose={() => removePrescheduleClass(cl)}></ListElement>
                             ))}
                             {preschedule.length == 0 && (<div style={{paddingLeft: "5px"}}>
                                 <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Search your classes to begin</span>
@@ -363,7 +363,17 @@ export default function Index({analytics}) {
                     <div style={{marginTop: "15px", marginLeft: "5px"}}>
                         <span style={{fontSize: "9pt", color: "rgba(255, 255, 255, 0.5)"}}>Click the schedule to set unavailable times</span>
                     </div>
-
+                    </>) : (<>
+                        <div style={{display: "flex"}}>
+                            <BackArrow onClick={() => setClassSubmenu(null)}></BackArrow>
+                            <div style={{marginTop: "10px", marginLeft: "5px", fontSize: "18pt"}}>
+                                <span><b>{preschedule[class_submenu].title + " (" + preschedule[class_submenu].type + ")"}</b></span>
+                            </div>
+                        </div>
+                        <div style={{marginTop: "5px"}}>
+                            <span>{name_map[preschedule[class_submenu].title]}</span>
+                        </div>
+                    </>)}
                 </div>
                 <div className={styles.menu1_submit}>
                     <div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
@@ -401,7 +411,12 @@ export default function Index({analytics}) {
                     ))}
                 </div>)}
                 <div>
-                    {schedule_svg}
+                    <div style={{width: "95%", textAlign: "right", marginTop: "10px"}}>
+                        <a href="/">Login</a>
+                    </div>
+                    <div>
+                        {schedule_svg}
+                    </div>
                 </div>
             </div>
         </div>

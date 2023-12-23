@@ -1,9 +1,9 @@
 import styles from "styles/Main.module.css";
 import Image from "next/image";
 
-export default function ListElement({text, key, onClose}){
+export default function ListElement({text, key, onClick, onClose}){
     
-    return (<div className={styles.list_element} key={key}>
+    return (<div onClick={() => onClick()} className={styles.list_element} key={key}>
         <div>
             <span>{text}</span>
         </div>

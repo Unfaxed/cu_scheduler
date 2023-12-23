@@ -192,6 +192,17 @@
     margin-bottom: 30px;
 }
 
+.back_arrow{
+    padding: 10px;
+    padding-bottom: 5px;
+    border-radius: 100%;
+    cursor: pointer;
+}
+.back_arrow:hover{
+    background-color: #ffffff2b;
+    transition: ease-in-out background-color 250ms;
+}
+
 .show_on_mobile{
     display: none;
 }
