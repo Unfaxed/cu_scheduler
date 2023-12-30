@@ -30,6 +30,10 @@
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2), 0 4px 6px 0 rgba(0, 0, 0, 0.19);
 }
 
+.link_colored{
+    color: #56a2ff;
+}
+
 .menu1_settings{
     height: calc(100vh - 65px - 20px);
     padding: 10px;
@@ -153,16 +157,13 @@
 .list_element{
     min-height: 40px;
     color: #FFF;
-    padding: 17px;
-    padding-bottom: 0;
     cursor: pointer;
     position: relative;
 }
 .list_element:hover{
     border-left: 5px solid #FFF;
-    padding-left: 13px;
     background-color: rgb(63, 63, 71);
-    transition: ease-in-out all 150ms;
+    transition: all 150ms ease-in-out;
 }
 
 .popup_container{
