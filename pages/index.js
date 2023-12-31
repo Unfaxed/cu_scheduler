@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import styles from "styles/Main.module.css";
 import Image from "next/image";
-import {renderScheduleSVG, isRangeIntersectionSingle, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
+import { isRangeIntersectionSingle, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
 import { lookup_map } from "lib/json/lookup_map.js";
 import { name_map } from "lib/json/name_map.js";
 import { Checkbox, FormControlLabel, Typography } from "@mui/material";
@@ -13,6 +13,7 @@ import React from "react";
 import Popup from "../comps/Popup";
 import ListElement from "../comps/ListElement";
 import ClassSubmenu from "../comps/ClassSubmenu";
+import Schedule from "../comps/Schedule";
 import { sha256 } from "js-sha256"
 
 export function getServerSideProps(context){
@@ -89,7 +90,8 @@ export default function Index({analytics}) {
                 removeUT
             }
     
-            setScheduleSVG(renderScheduleSVG(width, (window.innerHeight*0.9)-4, schedule, color_key, setColorKey, scheduleClick, scheduleHover, options));
+            setScheduleSVG(<Schedule width={width} height={(window.innerHeight*0.9)-4} schedule={schedule} color_key={color_key} setColorKey={setColorKey}
+                scheduleClick={scheduleClick} scheduleHover={scheduleHover} options={options}></Schedule>);
         }
 
         update();
@@ -418,9 +420,9 @@ export default function Index({analytics}) {
                     ))}
                 </div>)}
                 <div>
-                    <div style={{width: "95%", textAlign: "right", marginTop: "15px", fontSize: "12pt"}}>
+                    {false && (<div style={{width: "95%", textAlign: "right", marginTop: "15px", fontSize: "12pt"}}>
                         <a href="/">Login</a>
-                    </div>
+                    </div>)}
                     <div>
                         {schedule_svg}
                     </div>

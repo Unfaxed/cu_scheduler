@@ -57,11 +57,7 @@ export default function ClassSubmenu({cl, State, submit}) {
                             <ListItem key={"avoid-instr-" + i + "-container"} button onClick={() => handleChange(checked)} style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "0"}}>
                                 <Checkbox id={"avoid-instr-" + i} style={{paddingLeft: "0"}} 
                                     checked={checked}
-                                    sx={checked ? {} : {
-                                        "& .MuiSvgIcon-root": {
-                                           fill: "white",
-                                        }
-                                     }}></Checkbox>
+                                    sx={{color: "white"}}></Checkbox>
                                 <ListItemText primary={instructor}></ListItemText>
                             </ListItem>
                         );
