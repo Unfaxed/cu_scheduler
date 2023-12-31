@@ -434,7 +434,7 @@ export default function Index({analytics}) {
                 <div style={{marginBottom: "20px"}}>Registration Checklist:</div>
             {groupScheduleClasses(schedule.classes).map((checklist, i) => (
                 <div className={styles.checklist_element} key={"checklist-group-" + i}>
-                    <span style={{fontSize: "20pt"}}><u><b>{checklist.title }</b></u>{": " + name_map[checklist.title]}</span>
+                    <span style={{fontSize: "20pt"}}><b>{checklist.title }</b>{": " + name_map[checklist.title]}</span>
                     <div>
                         {checklist.sections.map(section => (
                             <FormControlLabel label={<Typography variant="label2">{"Section " + section}</Typography>} control = {
