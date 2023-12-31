@@ -42,28 +42,26 @@ export default function ClassSubmenu({cl, State, submit}) {
                 <List>
                     {getInstructorList(cl).map((instructor, i) => {
 
-                        const handleChange = () => {
+                        const handleChange = (checked) => {
                             if (cl.avoid_instructors == undefined) cl.avoid_instructors = [];
-
-                            const checkbox = document.getElementById("avoid-instr-" + i);
-                            if (checkbox){
-                                console.log("checkbox not null :3");
-                                checkbox.checked = !checkbox.checked; 
-                            }
                            
-                            if (cl.avoid_instructors.includes(instructor)) {
-                                cl.avoid_instructors.splice(cl.avoid_instructors.indexOf(instructor), 1);
-                            } else {
-                                cl.avoid_instructors.push(instructor);
-                            }
+                            if (!checked) cl.avoid_instructors.splice(cl.avoid_instructors.indexOf(instructor), 1);
+                            else cl.avoid_instructors.push(instructor);
 
-                            State.setPreSchedule(State.preschedule);
-                            console.log(cl.avoid_instructors);
+                            State.setPreSchedule([...State.preschedule]);
                         }
 
+                        const checked = cl.avoid_instructors == undefined || !cl.avoid_instructors.includes(instructor);
+
                         return (
-                            <ListItem key={"avoid-instr-" + i + "-container"} button onClick={handleChange} style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "0"}}>
-                                <Checkbox id={"avoid-instr-" + i} style={{paddingLeft: "0"}} defaultChecked={cl.avoid_instructors == undefined || !cl.avoid_instructors.includes(instructor)}></Checkbox>
+                            <ListItem key={"avoid-instr-" + i + "-container"} button onClick={() => handleChange(checked)} style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "0"}}>
+                                <Checkbox id={"avoid-instr-" + i} style={{paddingLeft: "0"}} 
+                                    checked={checked}
+                                    sx={checked ? {} : {
+                                        "& .MuiSvgIcon-root": {
+                                           fill: "white",
+                                        }
+                                     }}></Checkbox>
                                 <ListItemText primary={instructor}></ListItemText>
                             </ListItem>
                         );

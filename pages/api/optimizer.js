@@ -5,7 +5,7 @@ import { MAX_MODEL_TIME } from "../../lib/json/consts";
 
 export function randomCost(i){ //basic seeded pseudorandom function
     const n = Math.pow(i + 8, 2)*(100/9.0)*Math.E;
-    return n - Math.trunc(n);
+    return 10*(n - Math.trunc(n)) - 5;
 }
 
 export async function solve(model, preschedule, random_itr){ //run model and parse results
@@ -17,7 +17,8 @@ export async function solve(model, preschedule, random_itr){ //run model and par
         random_itr2++;
     }
 
-    //console.log(model);
+    //if (random_itr == 0) console.log(model);
+    //console.log(model.variables);
 
     const solved = solver.Solve(model)
 
@@ -50,6 +51,7 @@ export async function solve(model, preschedule, random_itr){ //run model and par
 }
 
 export default async function handler(req, res){
+
     try{
         if (req.method != "POST"){
             res.status(405).json({error_msg: "Must be 'POST' method!"});
@@ -135,14 +137,21 @@ export default async function handler(req, res){
                 const model_var = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
                 model_var["c" + i + "-enrolled"] = 1;
 
-                if (offering.full) model_var.cost_orig += 10; //avoid waitlist
+                if (offering.full) {
+                    model_var.cost_orig += 30; //avoid waitlist
+                }
+
+                //avoid professor
+                if (preschedule[i].avoid_instructors != undefined && preschedule[i].avoid_instructors.includes(offering.instructor)) {
+                    model_var.cost_orig += 30;
+                }
 
                 if (offering.meeting_times == undefined){ //if len 0, class is async
                     res.status(406).json({error_msg: "Class '" + title + "' offering #" + j + " does not define 'meeting_times'!"});
                     return;
                 }
 
-                let ut_count = 0;
+                let ut_count = 0; //number of times an offering has any intersection with unavailable times
                 for (let k = 0; k < offering.meeting_times.length; k++){ //for each time class meets in the week
                     const mtime = offering.meeting_times[k];
                     if (mtime.day == undefined || mtime.day < 0 || mtime.day > 4 || mtime.start_time == undefined || mtime.end_time == undefined || mtime.start_time < 0 || mtime.start_time > MAX_MODEL_TIME-1 || mtime.end_time <= mtime.start_time || mtime.end_time > MAX_MODEL_TIME){
@@ -170,7 +179,7 @@ export default async function handler(req, res){
                     }
                 }
 
-                model_var.cost_orig += ut_count*20;
+                model_var.cost_orig += ut_count*50; 
 
                 model.variables["c" + i + "-o" + j] = model_var;
                 model.ints["c" + i + "-o" + j] = 1;

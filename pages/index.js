@@ -70,7 +70,7 @@ export default function Index({analytics}) {
             var width = window.innerWidth;
             if (menu_shown){
                 if (window.innerWidth > 650) { //update with phone threshold
-                    const css_percentage = 0.23, css_min = 200, css_max = 350; //menu1 class
+                    const css_percentage = 0.25, css_min = 270, css_max = 410; //menu1 class
                     const percent = window.innerWidth*css_percentage;
         
                     if (percent < css_min) width = window.innerWidth - css_min;
@@ -327,7 +327,7 @@ export default function Index({analytics}) {
 
     //old chip:
     //<Chip key={"class-chip-" + i} label={cl.title+ " " + cl.type} variant="filled" onDelete={() => removePrescheduleClass(cl)} sx={{bgcolor: (conflict_class != null && conflict_class.toLowerCase() == cl.title.toLowerCase()) ? "red" : "white", marginRight: "3px", marginBottom: "3px"}}></Chip>
-    
+
     return(
         <>
         <Head>
