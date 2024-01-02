@@ -276,16 +276,33 @@ export default function Index({analytics}) {
             setSubmitted(false);
             return;
         }
+
+        const pre2 = [];
+        for (let i = 0; i < preschedule.length; i++){
+            const cl = {...preschedule[i]};
+            if (preschedule[i].enrolled_section != undefined){
+                cl.offerings = []; 
+                for (let j = 0; j < preschedule[i].offerings.length; j++){
+                    if (preschedule[i].offerings[j].section == preschedule[i].enrolled_section) {
+                        cl.offerings.push(preschedule[i].offerings[j]);
+                        break;
+                    }
+                }
+            }
+            if (cl.offerings.length > 0) pre2.push(cl);
+        }
         
         const params = JSON.stringify({
             avoid_times: schedule.avoid_times,
-            preschedule
+            preschedule: pre2
         });
 
         const hash = sha256(params);
         var res;
+        var cached = false;
         if (results_cache[hash] != undefined){
             res = results_cache[hash];
+            cached = true;
         } else {
             setLoading(true);
             const res1 = await fetch("/api/optimizer", {
@@ -310,7 +327,7 @@ export default function Index({analytics}) {
             const s = {classes: res.schedules[0].classes};
             s.avoid_times = schedule.avoid_times;
             setFullScheduleSet(res.schedules);
-            setSelectedScheduleIndex(0);
+            if (!cached || schedule.length != s.length) setSelectedScheduleIndex(0);
             setSchedule(s);
             setSubmitted(true);
             setStatusText("✅ Created schedule");
@@ -384,11 +401,11 @@ export default function Index({analytics}) {
                     )}
                 </div>
                 <div className={styles.menu1_submit}>
-                    <div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
+                    {class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
                         <center>
                             <span><b>{status_message}</b></span>
                         </center>
-                    </div>
+                    </div>)}
                     
                     {loading && (<div style={{marginTop: "6px", marginRight: "10px"}}>
                         <Image src="/loading.gif" width="32" height="32" alt="Loading"></Image>
@@ -438,7 +455,9 @@ export default function Index({analytics}) {
                     <div>
                         {checklist.sections.map(section => (
                             <FormControlLabel label={<Typography variant="label2">{"Section " + section}</Typography>} control = {
-                            <Checkbox id={"checkbox-" + checklist.title + " " + section} size="medium" sx={{color: "white"}} defaultChecked={checklist_selected.includes(checklist.title + " " + section)} 
+                            <Checkbox id={"checkbox-" + checklist.title + " " + section} 
+                            size="medium" sx={{color: "white"}} 
+                            defaultChecked={checklist_selected.includes(checklist.title + " " + section)} 
                             onChange={() => {
                                 if (checklist_selected.includes(checklist.title + " " + section)){
                                     setChecklistSelected(checklist_selected.filter(el => el != (checklist.title + " " + section)));

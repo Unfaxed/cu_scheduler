@@ -3,7 +3,7 @@ import {getInstructorList } from "lib/utils.js";
 import { name_map } from "lib/json/name_map.js";
 import React from "react";
 import BackArrow from "../comps/BackArrow";
-import { Checkbox, List, ListItem, ListItemText, Container } from '@mui/material';
+import { Checkbox, List, ListItem, ListItemText, Select, MenuItem } from '@mui/material';
 
 export default function ClassSubmenu({cl, State, submit}) {
     /*
@@ -20,6 +20,14 @@ export default function ClassSubmenu({cl, State, submit}) {
                         </div>
                         */
 
+    const handleEnrolledChange = (e) => {
+        const selected = e.target.value;
+        if (selected == 0) delete cl.enrolled_section;
+        else cl.enrolled_section = selected;
+        State.setPreSchedule([...State.preschedule]);
+        submit();
+    }
+
     return (<>
         <div style={{display: "flex", marginTop: "15px"}}>
             <BackArrow onClick={() => {
@@ -35,7 +43,21 @@ export default function ClassSubmenu({cl, State, submit}) {
             <div style={{marginTop: "15px", fontSize: "14pt"}}>
                 <a target="_blank" className={styles.link_colored} href={"https://viz-public.cu.edu/t/Boulder/views/Class_Search_Crse_FCQ/FCQResults?Subject-Course=" + cl.title.replace(" ", "-")}>See Evaluations</a>
             </div>
-            <div style={{marginTop: "30px", marginBottom: "35px"}}>
+            <div style={{marginTop: "30px"}}>
+                <div style={{marginBottom: "10px"}}>
+                    <span>Enrolled Section:</span>
+                </div>
+                <Select 
+                value={cl.enrolled_section || 0}
+                sx={{color: "white", width: "90%"}}
+                onChange={handleEnrolledChange}>
+                    <MenuItem value={0}>None</MenuItem>
+                    {cl.offerings.map((offering) => (
+                        <MenuItem value={offering.section}>{"Section " + offering.section}</MenuItem>
+                    ))}
+                </Select>
+            </div>
+            <div style={{marginTop: "30px", marginBottom: "35px", color: cl.enrolled_section != undefined ? "#999" : "inherit"}}>
                 <div> 
                     <span>Preferred Instructors:</span>
                 </div>
@@ -43,6 +65,7 @@ export default function ClassSubmenu({cl, State, submit}) {
                     {getInstructorList(cl).map((instructor, i) => {
 
                         const handleChange = (checked) => {
+                            if (cl.enrolled_section != undefined) return;
                             if (cl.avoid_instructors == undefined) cl.avoid_instructors = [];
                            
                             if (!checked) cl.avoid_instructors.splice(cl.avoid_instructors.indexOf(instructor), 1);
@@ -57,7 +80,8 @@ export default function ClassSubmenu({cl, State, submit}) {
                             <ListItem key={"avoid-instr-" + i + "-container"} button onClick={() => handleChange(checked)} style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "0"}}>
                                 <Checkbox id={"avoid-instr-" + i} style={{paddingLeft: "0"}} 
                                     checked={checked}
-                                    sx={{color: "white"}}></Checkbox>
+                                    sx={{color: "white"}}
+                                    disabled={cl.enrolled_section != undefined}></Checkbox>
                                 <ListItemText primary={instructor}></ListItemText>
                             </ListItem>
                         );

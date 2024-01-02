@@ -159,11 +159,11 @@
     color: #FFF;
     cursor: pointer;
     position: relative;
+    transition: all 150ms ease-in-out;
 }
 .list_element:hover{
     border-left: 5px solid #FFF;
     background-color: rgb(63, 63, 71);
-    transition: all 150ms ease-in-out;
 }
 
 .popup_container{
