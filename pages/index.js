@@ -67,6 +67,14 @@ export default function Index({analytics}) {
             setAwaitSubmit(false);
         }
 
+        window.addEventListener("beforeunload", function (e) {
+            if (preschedule.length == 0) return;
+            var confirmationMessage = 'Changes you made may not be saved.';
+        
+            (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+            return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+        });
+
         function update(){ //refresh schedule states and fit to screen size
             var width = window.innerWidth;
             if (menu_shown){
@@ -324,10 +332,16 @@ export default function Index({analytics}) {
         setLoading(false);
 
         if (!res.conflictions) {
-            const s = {classes: res.schedules[0].classes};
+            var schedule_index = selected_schedule_index;
+            
+            if (!cached || schedule.classes.length != preschedule.length){
+                setSelectedScheduleIndex(0);
+                schedule_index = 0;
+            }
+            
+            const s = {classes: res.schedules[schedule_index].classes};
             s.avoid_times = schedule.avoid_times;
             setFullScheduleSet(res.schedules);
-            if (!cached || schedule.length != s.length) setSelectedScheduleIndex(0);
             setSchedule(s);
             setSubmitted(true);
             setStatusText("✅ Created schedule");
