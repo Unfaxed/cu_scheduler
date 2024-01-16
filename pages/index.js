@@ -354,7 +354,7 @@ export default function Index({analytics}) {
             setStatusText("❌ Impossible to fit this class!");
             setSubmitted(false);
             setSchedule({classes: [], avoid_times: schedule.avoid_times});
-            if (lastAddedClass != null) setConflictingClass(lastAddedClass.toUpperCase());
+            if (lastAddedClass != null && conflict_class == null) setConflictingClass(lastAddedClass.toUpperCase());
         }
     }
 
@@ -400,7 +400,7 @@ export default function Index({analytics}) {
                                 {preschedule.map((cl, i) => (
                                     <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClick={(event) => {
                                         setClassSubmenu(i)
-                                    }} onDelete={() => removePrescheduleClass(cl)}></ListElement>
+                                    }} onDelete={() => removePrescheduleClass(cl)} error={cl.title == conflict_class}></ListElement>
                                 ))}
                                 {preschedule.length == 0 && (<div style={{paddingLeft: "12px"}}>
                                     <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Search your classes to begin</span>
