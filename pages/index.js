@@ -14,17 +14,32 @@ import Popup from "../comps/Popup";
 import ListElement from "../comps/ListElement";
 import ClassSubmenu from "../comps/ClassSubmenu";
 import Schedule from "../comps/Schedule";
+import Settings from "../comps/Settings";
 import { sha256 } from "js-sha256"
+import { DEFAULT_SEMESTER, YEAR_DB_INFO } from "lib/json/consts";
 
 export function getServerSideProps(context){
+    var srcdb = YEAR_DB_INFO[DEFAULT_SEMESTER.toLowerCase().replace(" ", "")];
+    var semester = DEFAULT_SEMESTER;
+
+    if (context.query != undefined && context.query.semester != undefined){
+        const srcdb_lookup = YEAR_DB_INFO[context.query.semester.replace("-", "")];
+        if (srcdb_lookup != undefined) {
+            srcdb = srcdb_lookup;
+            semester = context.query.semester;
+        }
+    }
+
     return {
         props: {
-            analytics: !process.env.DEV_ENV
+            analytics: !process.env.DEV_ENV,
+            srcdb,
+            semester
         }
     }
 }
 
-export default function Index({analytics}) {
+export default function Index({analytics, srcdb, semester}) {
 
     const [schedule_svg, setScheduleSVG] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -231,7 +246,7 @@ export default function Index({analytics}) {
         setLoading(true);
 
         //const preschedule_add = await getPreScheduleClass(class_code.toUpperCase(), context.cors_anywhere);
-        const preschedule_add_f = await fetch("/api/class_data?" + new URLSearchParams({name: class_code})); //fetch data from api
+        const preschedule_add_f = await fetch("/api/class_data?" + new URLSearchParams({name: class_code, srcdb})); //fetch data from api
         const preschedule_add = await preschedule_add_f.json();
         if (preschedule_add != null) {
             if (preschedule_add.length == prescheduleClassCount(preschedule, class_code)) {
@@ -413,6 +428,9 @@ export default function Index({analytics}) {
                     </>) : (
                         <ClassSubmenu cl={preschedule[class_submenu]} State={State} submit={submit}></ClassSubmenu>
                     )}
+                    <div style={{marginTop: "30px"}}>
+                        <Settings semester={semester}></Settings>
+                    </div>
                 </div>
                 <div className={styles.menu1_submit}>
                     {class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
