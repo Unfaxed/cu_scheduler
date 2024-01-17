@@ -126,6 +126,8 @@ export default async function handler(req, res){
             }
         }
 
+        const avoid_waitlist = data.avoid_waitlist == undefined ? true : data.avoid_waitlist;
+
         for (let i = 0; i < preschedule.length; i++){ //each class to be scheduled
 
             const title = preschedule[i].title.toUpperCase();
@@ -137,8 +139,9 @@ export default async function handler(req, res){
                 const model_var = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
                 model_var["c" + i + "-enrolled"] = 1;
 
-                if (offering.full) {
+                if (offering.full && avoid_waitlist) {
                     model_var.cost_orig += 30; //avoid waitlist
+                    console.log("added waitlist cost");
                 }
 
                 //avoid professor

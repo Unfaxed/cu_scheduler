@@ -17,6 +17,10 @@ a:hover{
     text-decoration: underline;
 }
 
+.pointer_hover:hover{
+    cursor: pointer;
+}
+
 .MuiOutlinedInput-notchedOutline{
     border-color: #FFF !important;
     color: #FFF !important;

@@ -64,6 +64,7 @@ export default function Index({analytics, srcdb, semester}) {
     const [checklist_selected, setChecklistSelected] = useState([]); 
     const [results_cache, setResultsCache] = useState({});
     const [class_submenu, setClassSubmenu] = useState(null);
+    const [avoid_waitlist, setAvoidWaitlist] = useState(true);
 
     const State = {
         schedule_svg, setScheduleSVG, loading, setLoading, status_message, setStatusText, preschedule, setPreSchedule,
@@ -71,7 +72,7 @@ export default function Index({analytics, srcdb, semester}) {
         color_key, setColorKey, ut_create0, setUTCreatorStart, ut_create1, setUTCreatorEnd, full_schedule_set, setFullScheduleSet,
         selected_schedule_index, setSelectedScheduleIndex, conflict_class, setConflictingClass, checklist_visible, setChecklistVisible,
         menu_shown, setMenuShown, show_menu_x, setShowMenuXButton, checklist_selected, setChecklistSelected, results_cache, setResultsCache,
-        class_submenu, setClassSubmenu
+        class_submenu, setClassSubmenu, avoid_waitlist, setAvoidWaitlist
     }
 
     useEffect(() => {
@@ -317,6 +318,7 @@ export default function Index({analytics, srcdb, semester}) {
         
         const params = JSON.stringify({
             avoid_times: schedule.avoid_times,
+            avoid_waitlist,
             preschedule: pre2
         });
 
@@ -349,7 +351,7 @@ export default function Index({analytics, srcdb, semester}) {
         if (!res.conflictions) {
             var schedule_index = selected_schedule_index;
             
-            if (!cached || schedule.classes.length != preschedule.length){
+            if (!cached || schedule.classes.length != preschedule.length || res.schedules.length <= schedule_index){
                 setSelectedScheduleIndex(0);
                 schedule_index = 0;
             }
@@ -372,6 +374,10 @@ export default function Index({analytics, srcdb, semester}) {
             if (lastAddedClass != null && conflict_class == null) setConflictingClass(lastAddedClass.toUpperCase());
         }
     }
+
+    useEffect(() => {
+        submit();
+    }, [avoid_waitlist]);
 
     //old chip:
     //<Chip key={"class-chip-" + i} label={cl.title+ " " + cl.type} variant="filled" onDelete={() => removePrescheduleClass(cl)} sx={{bgcolor: (conflict_class != null && conflict_class.toLowerCase() == cl.title.toLowerCase()) ? "red" : "white", marginRight: "3px", marginBottom: "3px"}}></Chip>
@@ -425,12 +431,12 @@ export default function Index({analytics, srcdb, semester}) {
                         <div style={{marginTop: "15px", marginLeft: "5px"}}>
                             <span style={{fontSize: "9pt", color: "rgba(255, 255, 255, 0.5)"}}>Click the schedule to set unavailable times</span>
                         </div>
+                        <div style={{marginTop: "30px"}}>
+                            <Settings semester={semester} State={State}></Settings>
+                        </div>
                     </>) : (
                         <ClassSubmenu cl={preschedule[class_submenu]} State={State} submit={submit}></ClassSubmenu>
                     )}
-                    <div style={{marginTop: "30px"}}>
-                        <Settings semester={semester}></Settings>
-                    </div>
                 </div>
                 <div className={styles.menu1_submit}>
                     {class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
