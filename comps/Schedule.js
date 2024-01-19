@@ -1,4 +1,5 @@
 import styles from "styles/Main.module.css";
+import ScheduleFooter from "./ScheduleFooter";
 import { QUARTER_MAX } from "lib/json/consts.js";
 
 export default function Schedule({width, height, schedule, color_key, setColorKey, scheduleClick, scheduleHover, options}) {
@@ -22,6 +23,7 @@ export default function Schedule({width, height, schedule, color_key, setColorKe
     }
 
     const r = (
+        <>
         <svg width={width} height={1.7*height}>
 
             {schedule != null && (<><g className={styles.avoid_times}>
@@ -110,6 +112,8 @@ export default function Schedule({width, height, schedule, color_key, setColorKe
             </>)}
 
         </svg>
+        <ScheduleFooter></ScheduleFooter>
+        </>
     )
     setColorKey(color_key);
     return r;

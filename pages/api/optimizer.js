@@ -141,7 +141,6 @@ export default async function handler(req, res){
 
                 if (offering.full && avoid_waitlist) {
                     model_var.cost_orig += 30; //avoid waitlist
-                    console.log("added waitlist cost");
                 }
 
                 //avoid professor
