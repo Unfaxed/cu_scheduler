@@ -15,6 +15,7 @@ import ListElement from "../comps/ListElement";
 import ClassSubmenu from "../comps/ClassSubmenu";
 import Schedule from "../comps/Schedule";
 import Settings from "../comps/Settings";
+import ScheduleFooter from "../comps/ScheduleFooter";
 import { sha256 } from "js-sha256"
 import { DEFAULT_SEMESTER, YEAR_DB_INFO } from "lib/json/consts";
 
@@ -464,24 +465,27 @@ export default function Index({analytics, srcdb, semester}) {
             </>)}
 
             <div className={styles.schedule_container}>
-                {submitted && (<div>
-                    {full_schedule_set.map((schedule_set, i) => (
-                        <div key={"schedule-number-" + i} style={selected_schedule_index == i ? {borderRight: "4px solid #FFF", backgroundColor: "#2c2c34"} : {}} className={styles.full_schedule_select_number} onClick={() => {
-                            setSchedule({avoid_times: schedule.avoid_times, classes: full_schedule_set[i].classes});
-                            setSelectedScheduleIndex(i);
-                        }}>
-                            <span><b>{i+1}</b></span>
-                        </div>
-                    ))}
-                </div>)}
-                <div>
-                    {false && (<div style={{width: "95%", textAlign: "right", marginTop: "15px", fontSize: "12pt"}}>
-                        <a href="/">Login</a>
+                <div style={{display: "flex", flexWrap: "nowrap"}}>
+                    {submitted && (<div>
+                        {full_schedule_set.map((schedule_set, i) => (
+                            <div key={"schedule-number-" + i} style={selected_schedule_index == i ? {borderRight: "4px solid #FFF", backgroundColor: "#2c2c34"} : {}} className={styles.full_schedule_select_number} onClick={() => {
+                                setSchedule({avoid_times: schedule.avoid_times, classes: full_schedule_set[i].classes});
+                                setSelectedScheduleIndex(i);
+                            }}>
+                                <span><b>{i+1}</b></span>
+                            </div>
+                        ))}
                     </div>)}
                     <div>
-                        {schedule_svg}
+                        {false && (<div style={{width: "95%", textAlign: "right", marginTop: "15px", fontSize: "12pt"}}>
+                            <a href="/">Login</a>
+                        </div>)}
+                        <div>
+                            {schedule_svg}
+                        </div>
                     </div>
                 </div>
+                <ScheduleFooter></ScheduleFooter>
             </div>
         </div>
         <Popup setVisible={setChecklistVisible} visible={checklist_visible}>
