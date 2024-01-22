@@ -7,13 +7,10 @@ export default function Schedule({width, height, schedule, color_key, setColorKe
     const w = (100 - (marginx_left + marginx_right)), h = (100 - (marginy_top + marginy_bottom));
     const daylen = 12.75; //10.75
     const height_scalar = 1.7;
-
-    console.log("w=" + w + ", h=" + h + ", width=" + width);
     
     const getX = (i) => {return (marginx_left + (i*w/5.0))}
     const getY = (i) => {return ((i*h/daylen) + marginy_top)}
     
-    console.log("a=" + ((getX(1+1)*width) + 20) + "px, x%=" + getX(2))
     //const colors = ["#666A86", "#788AA3", "#92B6B1", "#B2C9AB", "#E8DDB5"] //slate palette
 
     //const color_key = {};
@@ -102,10 +99,8 @@ export default function Schedule({width, height, schedule, color_key, setColorKe
             {(schedule != null && options.removeUT != undefined) && (<><g>
                 {schedule.avoid_times.map((hours_list, i) => (<g key={"avoid-x-day-" + i}>
                     {hours_list.map((hour_set, j) => {
-                        console.log("i = " + i + ", x=" + getX(i+1));
-                        if (hour_set.length < 2) return (<g key={"avoid-x-" + i + "-" + j}></g>);
+                    if (hour_set.length < 2) return (<g key={"avoid-x-" + i + "-" + j}></g>);
 
-                    
                     //render the x button to remove an unavailable time
                     return (<g key={"avoid-x-" + i + "-" + j} style={{marginRight: "20px", marginTop: "5px"}}>
                         <image x={((getX(i+1)*width/100) - 20) + "px"} y={((getY(hour_set[0]/12.0)*height*height_scalar/100) + 8) + "px"} height="14" width="14" href="/icons/close.png" style={{cursor: "pointer"}} alt="Delete Time" onClick={()=> options.removeUT(i, j)}></image>
