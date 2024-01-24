@@ -75,6 +75,16 @@
     fill-opacity: 0.35;
 }
 
+.avoid_times_edit{
+    fill: #ff3f29;
+    cursor: ns-resize;
+}
+
+.avoid_times_edit_container{
+    fill: #F0F;
+    cursor: ns-resize;
+}
+
 .card{
     background-color: #37373f;
     border-radius: 4px;

@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import styles from "styles/Main.module.css";
 import Image from "next/image";
-import { isRangeIntersectionSingle, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
+import { removeOverlappingUT, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
 import { lookup_map } from "lib/json/lookup_map.js";
 import { name_map } from "lib/json/name_map.js";
 import { Checkbox, FormControlLabel, Typography } from "@mui/material";
@@ -17,7 +17,7 @@ import Schedule from "../comps/Schedule";
 import Settings from "../comps/Settings";
 import ScheduleFooter from "../comps/ScheduleFooter";
 import { sha256 } from "js-sha256"
-import { DEFAULT_SEMESTER, YEAR_DB_INFO } from "lib/json/consts";
+import { DEFAULT_SEMESTER, YEAR_DB_INFO, MAX_MODEL_TIME } from "lib/json/consts";
 
 export function getServerSideProps(context){
     var srcdb = YEAR_DB_INFO[DEFAULT_SEMESTER.toLowerCase().replace(" ", "")];
@@ -54,8 +54,7 @@ export default function Index({analytics, srcdb, semester}) {
     const [await_submit, setAwaitSubmit] = useState(false);
     const [class_suggestions, setClassSuggestions] = useState([]);
     const [color_key, setColorKey] = useState({});
-    const [ut_create0, setUTCreatorStart] = useState(null);
-    const [ut_create1, setUTCreatorEnd] = useState(null);
+    const [ut_editing, setUTEditing] = useState(null); //[day, index, top]
     const [full_schedule_set, setFullScheduleSet] = useState([[]]);
     const [selected_schedule_index, setSelectedScheduleIndex] = useState(0);
     const [conflict_class, setConflictingClass] = useState(null);
@@ -70,10 +69,10 @@ export default function Index({analytics, srcdb, semester}) {
     const State = {
         schedule_svg, setScheduleSVG, loading, setLoading, status_message, setStatusText, preschedule, setPreSchedule,
         schedule, setSchedule, submitted, setSubmitted, await_submit, setAwaitSubmit, class_suggestions, setClassSuggestions,
-        color_key, setColorKey, ut_create0, setUTCreatorStart, ut_create1, setUTCreatorEnd, full_schedule_set, setFullScheduleSet,
+        color_key, setColorKey, full_schedule_set, setFullScheduleSet,
         selected_schedule_index, setSelectedScheduleIndex, conflict_class, setConflictingClass, checklist_visible, setChecklistVisible,
         menu_shown, setMenuShown, show_menu_x, setShowMenuXButton, checklist_selected, setChecklistSelected, results_cache, setResultsCache,
-        class_submenu, setClassSubmenu, avoid_waitlist, setAvoidWaitlist
+        class_submenu, setClassSubmenu, avoid_waitlist, setAvoidWaitlist, ut_editing, setUTEditing
     }
 
     useEffect(() => {
@@ -109,14 +108,12 @@ export default function Index({analytics, srcdb, semester}) {
             setShowMenuXButton(window.innerWidth <= 750);
 
             const options = {
-                ut_start: ut_create0,
-                ut_end: ut_create1,
                 scheduleClickUp: (x, y) => scheduleClick(x, y, true),
                 removeUT
             }
     
-            setScheduleSVG(<Schedule width={width} height={(window.innerHeight*0.9)-4} schedule={schedule} color_key={color_key} setColorKey={setColorKey}
-                scheduleClick={scheduleClick} scheduleHover={scheduleHover} options={options}></Schedule>);
+            setScheduleSVG(<Schedule width={width} height={(window.innerHeight*0.9)-4} State={State} 
+            scheduleClick={scheduleClick} options={options}></Schedule>);
         }
 
         update();
@@ -127,8 +124,7 @@ export default function Index({analytics, srcdb, semester}) {
                 addPrescheduleClass(textinput);
             }
             else if (e.keyCode == 27){
-                setUTCreatorStart(null);
-                setUTCreatorEnd(null);
+                setUTEditing(null);
             }
         }
 
@@ -178,55 +174,21 @@ export default function Index({analytics, srcdb, semester}) {
             if (search_box != null) search_box.removeEventListener("input", searchBoxType);
         }
 
-    }, [schedule, preschedule, ut_create0, ut_create1, submitted]);
-
-    useEffect(() => {
-        if (ut_create1 != null && window.innerWidth < 750){
-            scheduleClick(ut_create1[0], ut_create1[1]);
-        }
-    }, [ut_create1]);
+    }, [schedule, preschedule, ut_editing, submitted]);
 
     function scheduleClick(day, time, is_upclick){
-        if (ut_create0 == null && (!is_upclick || window.innerWidth < 750) && UTCount(schedule.avoid_times) < 20){
-            //set first unavailable time point on schedule
-            setUTCreatorStart([day, time]);
-        } else if (ut_create1 != null) { //set 2nd ut point
-            const avoid_times = schedule.avoid_times;
-            for (let i = Math.min(ut_create0[0], ut_create1[0]); i <= Math.max(ut_create0[0], ut_create1[0]); i++){
-                var add_new = true;
-                const new_ut = [Math.min(ut_create0[1], ut_create1[1]), Math.max(ut_create0[1], ut_create1[1])];
-
-                if (day > 4) continue;
-
-                const remove_indexes = []; //TODO
-                for (let j = 0; j < avoid_times[i].length; j++){
-                    const existing_ut = avoid_times[i][j];
-                    if (isRangeIntersectionSingle(new_ut, existing_ut)){ //handle trivial overlapping ranges
-                        if (new_ut[0] < existing_ut[0]) {
-                            existing_ut[0] = new_ut[0];
-                            add_new = false;
-                        }
-                        if (new_ut[1] > existing_ut[1]){
-                            existing_ut[1] = new_ut[1];
-                            add_new = false;
-                        }
-                        if (new_ut[0] >= existing_ut[0] && new_ut[1] <= existing_ut[1]) add_new = false;
-                        if (!add_new) break;
-                    }
-                }
-
-                if (add_new) avoid_times[i].push(new_ut);
-            }
-
-            setUTCreatorStart(null);
-            setUTCreatorEnd(null);
+        if (ut_editing == null && !is_upclick){
+            var start = Math.max(0, time - 6);
+            var avoid_times = schedule.avoid_times;
+            avoid_times[day].push([start, Math.min(start + 12, MAX_MODEL_TIME)]);
+            avoid_times = removeOverlappingUT(day, avoid_times);
             setSchedule({classes: schedule.classes, avoid_times});
             submit();
-        }
-    }
-    function scheduleHover(day, time){
-        if (ut_create0 != null){
-            setUTCreatorEnd([day, time]);
+        } else { //save after edit
+            const avoid_times = removeOverlappingUT(day, schedule.avoid_times);
+            setUTEditing(null);
+            setSchedule({classes: schedule.classes, avoid_times});
+            submit();
         }
     }
 
@@ -234,8 +196,7 @@ export default function Index({analytics, srcdb, semester}) {
         const ut_list = schedule.avoid_times;
         ut_list[day].splice(index, 1);
         setAwaitSubmit(true);
-        setUTCreatorStart(null);
-        setUTCreatorEnd(null);
+        setUTEditing(null);
         setSchedule({classes: schedule.classes, avoid_times: ut_list});
     }
 
@@ -400,7 +361,7 @@ export default function Index({analytics, srcdb, semester}) {
         </Head>
         <div className={styles.main_container}>
             {menu_shown && (<><div className={styles.menu1}>
-                {show_menu_x && (<div style={{position: "absolute", top: "10px", right: "-30px", cursor: "pointer"}} onClick={() => {setMenuShown(false); setUTCreatorStart(null); setUTCreatorEnd(null)}}>
+                {show_menu_x && (<div style={{position: "absolute", top: "10px", right: "-30px", cursor: "pointer"}} onClick={() => {setMenuShown(false); setUTEditing(null);}}>
                     <Image src="/icons/close.png" alt="Close Menu" width="21" height="21"></Image>
                 </div>)}
 
@@ -515,7 +476,7 @@ export default function Index({analytics, srcdb, semester}) {
             ))}
             </div>
         </Popup>
-        {!menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {setMenuShown(true); setUTCreatorEnd(null); setUTCreatorStart(null)}}>
+        {!menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {setMenuShown(true); setUTEditing(null);}}>
             <Image src="/icons/menu.png" alt="Show menu" width="25" height="25"></Image>
         </div>)}
         </>
