@@ -4,7 +4,7 @@ import { Checkbox, ListItem, ListItemText, Select, MenuItem } from '@mui/materia
 export default function Settings({semester, State}){
 
     const semesters = ["Summer 2024", "Spring 2024", "Fall 2023"];
-    const curr = semester == null ? "spring 2024" : semester.replace("-", " ").toLowerCase();
+    const curr = semester == null ? "summer 2024" : semester.replace("-", " ").toLowerCase();
 
     const handleWaitlistChange = () => {
         State.setAvoidWaitlist(!State.avoid_waitlist);
