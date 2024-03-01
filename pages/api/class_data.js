@@ -8,7 +8,10 @@ export default async function handler(req, res){
         return;
     }
 
-    const res1 = await getPreScheduleClass(req.query.name, "");
+    var srcdb = req.query.srcdb;
+    if (srcdb.length >= 10) srcdb = null;
+
+    const res1 = await getPreScheduleClass(req.query.name, srcdb == null ? "" : srcdb);
 
     res.status(200).json(res1);
 
