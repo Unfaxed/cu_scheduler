@@ -28,6 +28,8 @@ export default function ClassSubmenu({cl, State, submit}) {
         submit();
     }
 
+    const instr_list = getInstructorList(cl);
+
     return (<>
         <div style={{display: "flex", marginTop: "15px"}}>
             <BackArrow onClick={() => {
@@ -57,12 +59,12 @@ export default function ClassSubmenu({cl, State, submit}) {
                     ))}
                 </Select>
             </div>
-            <div style={{marginTop: "30px", marginBottom: "35px", color: cl.enrolled_section != undefined ? "#999" : "inherit"}}>
+            {instr_list.length > 0 && (<div style={{marginTop: "30px", marginBottom: "35px", color: cl.enrolled_section != undefined ? "#999" : "inherit"}}>
                 <div> 
                     <span>Preferred Instructors:</span>
                 </div>
                 <List>
-                    {getInstructorList(cl).map((instructor, i) => {
+                    {instr_list.map((instructor, i) => {
 
                         const handleChange = (checked) => {
                             if (cl.enrolled_section != undefined) return;
@@ -87,7 +89,7 @@ export default function ClassSubmenu({cl, State, submit}) {
                         );
                     })}
                 </List>
-            </div>
+            </div>)}
         </div>
     </>);
 }
