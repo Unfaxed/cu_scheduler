@@ -1,5 +1,5 @@
-import styles from "styles/Main.module.css";
-import { QUARTER_MAX } from "lib/json/consts.js";
+import styles from "../styles/Main.module.css";
+import { QUARTER_MAX } from "../lib/json/consts.js";
 
 export default function Schedule({width, height, State, scheduleClick, scheduleHover2, options}) {
     const marginx_right = 5, marginx_left = 9000/width, marginy_top = 7, marginy_bottom = 2.5; //percent

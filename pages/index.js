@@ -3,11 +3,11 @@ import Head from "next/head.js";
 import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import styles from "styles/Main.module.css";
+import styles from "../styles/Main.module.css";
 import Image from "next/image";
-import { removeOverlappingUT, UTCount, groupScheduleClasses, prescheduleClassCount } from "lib/utils.js";
-import { lookup_map } from "lib/json/lookup_map.js";
-import { name_map } from "lib/json/name_map.js";
+import { removeOverlappingUT, UTCount, groupScheduleClasses, prescheduleClassCount } from "../lib/utils.js";
+import { lookup_map } from "../lib/json/lookup_map.js";
+import { name_map } from "../lib/json/name_map.js";
 import { Checkbox, FormControlLabel, Typography } from "@mui/material";
 import React from "react";
 import Popup from "../comps/Popup";
@@ -17,7 +17,7 @@ import Schedule from "../comps/Schedule";
 import Settings from "../comps/Settings";
 import ScheduleFooter from "../comps/ScheduleFooter";
 import { sha256 } from "js-sha256"
-import { DEFAULT_SEMESTER, YEAR_DB_INFO, MAX_MODEL_TIME } from "lib/json/consts";
+import { DEFAULT_SEMESTER, YEAR_DB_INFO, MAX_MODEL_TIME } from "../lib/json/consts";
 
 export function getServerSideProps(context){
     var srcdb = YEAR_DB_INFO[DEFAULT_SEMESTER.toLowerCase().replace(" ", "")];

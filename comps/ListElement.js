@@ -1,4 +1,4 @@
-import styles from "styles/Main.module.css";
+import styles from "../styles/Main.module.css";
 import Image from "next/image";
 
 export default function ListElement({text, key, onClick, onDelete, error}){

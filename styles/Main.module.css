@@ -206,10 +206,10 @@
     padding-bottom: 5px;
     border-radius: 100%;
     cursor: pointer;
+    transition: ease-in-out background-color 250ms;
 }
 .back_arrow:hover{
     background-color: #ffffff2b;
-    transition: ease-in-out background-color 250ms;
 }
 
 .schedule_footer_container{

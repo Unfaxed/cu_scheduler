@@ -1,6 +1,5 @@
-import { isRangeIntersection, isSameSchedule } from "lib/utils";
+import { isRangeIntersection, isSameSchedule } from "../../lib/utils";
 import solver from "javascript-lp-solver/src/solver";
-import { example_schedule, example_schedule2 } from "../../lib/json/example_schedule";
 import { MAX_MODEL_TIME } from "../../lib/json/consts";
 
 export function randomCost(i){ //basic seeded pseudorandom function
