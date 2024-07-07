@@ -3,6 +3,7 @@ import styles from "../styles/Main.module.css";
 export default function Popup({visible, setVisible, onClose, children}){
     if (!visible) return (<></>);
     
+    //modal used for class checklist
     return (
         <div className={styles.popup_container} id="popup-bg" onClick={(e) => {
             if (e.target.id == "popup-bg" || e.target.id == "popup-bg-center") {

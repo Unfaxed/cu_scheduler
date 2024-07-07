@@ -13,8 +13,9 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
 
     var ut_editing = State.ut_editing;
 
+    //hover over schedule time event listener
     function scheduleHover(day, time){
-        if (ut_editing != null) {//if (ut_create0 != null){
+        if (ut_editing != null) {
             const avoid_times = State.schedule.avoid_times;
             const ut = avoid_times[ut_editing.day][ut_editing.index];
             if ((ut_editing.top && time > ut[1]-4) || (!ut_editing.top && time < ut[0]+4)) return;
@@ -48,6 +49,7 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
                 </g>
             </>)}
 
+            {/* Draw horizontal grid lines and add day labels */}
             <g fill="white">
                 {Array.from(new Array(13), (x, i) => i).map(i => (<g key={"horizontal-" + i}>
                     <rect x={(marginx_left) + "%"} y={getY(i) + "%"} height="2" width={w + "%"}></rect>
@@ -60,12 +62,13 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
 
             {State.schedule != null && (<>
             <g>
+                {/* Render classes on selected schedule */}
                 {State.schedule.classes.map((cl, i) => (<g key={"class-set-" + i}>
                     {cl.meeting_times.map(meeting_time => {
                         var x = getX(meeting_time.day) + 0.14, y = getY(meeting_time.start_time/12.0) + 0.08;
                         //style={{fill: colors[i % colors.length]}}
 
-                        var color_num = State.color_key[cl.title];
+                        var color_num = State.color_key[cl.title]; //get color for class name if not already defined
                         if (color_num == undefined) {
                             color_num = color_count;
                             State.color_key[cl.title] = color_num;
@@ -78,36 +81,36 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
                             x += rect_width*cl.quarter;
                         }
 
-                        return (<g key={"class-" + i + "-day-" + meeting_time.day}>
-                        <rect x={x + "%"} y={y + "%"} width={rect_width + "%"} 
-                        height={(getY(meeting_time.end_time/12.0) - y) + "%"} 
-                        className={styles["palette-" + color_num]} rx="6" ry="6"></rect>
-                        
-                        <g style={{fill: "#FFF"}} fontSize={width > 900 ? "13pt" : "8pt"}>
-                            <text x={(x+0.5) + "%"} y={(y+2.4) + "%"} fontWeight="bold">{cl.title}</text>
-                            <text x={(x+0.5) + "%"} y={(y+5) + "%"}>{((width > 590 && cl.quarter == null) ? "Section " : "") + cl.section + (width > 400 ? " (" + cl.type + ")" : "")}</text>
-                        </g>
-                        </g>)
+                        return (
+                            <g key={"class-" + i + "-day-" + meeting_time.day}>
+                            <rect x={x + "%"} y={y + "%"} width={rect_width + "%"} 
+                            height={(getY(meeting_time.end_time/12.0) - y) + "%"} 
+                            className={styles["palette-" + color_num]} rx="6" ry="6"></rect>
+                            
+                            <g style={{fill: "#FFF"}} fontSize={width > 900 ? "13pt" : "8pt"}>
+                                <text x={(x+0.5) + "%"} y={(y+2.4) + "%"} fontWeight="bold">{cl.title}</text>
+                                <text x={(x+0.5) + "%"} y={(y+5) + "%"}>{((width > 590 && cl.quarter == null) ? "Section " : "") + cl.section + (width > 400 ? " (" + cl.type + ")" : "")}</text>
+                            </g>
+                            </g>
+                        );
                     })}
                 </g>))}
             </g>
             </>)}
 
+            {/* Set up click & hover event listeners */}
             <g>
                 {Array.from(new Array(5), (x, i) => i).map(xc => (<g key={"click-event-set-" + xc}>
                     {Array.from(new Array(Math.trunc(daylen*12)), (x, i) => i).map(yc => (
                         <rect x={getX(xc) + "%"} y={getY(yc/12)+ "%"} width={(w/5) + "%"} height={(h/daylen/12) + "%"} 
                         onMouseDown={() => scheduleClick(xc, yc)} onMouseUp={() => {
-                            /*if (ut_editing != null){
-                                //
-                                ut_editing = null;
-                                State.setUTEditing(ut_editing);
-                            }*/
                             if (options.scheduleClickUp != undefined) options.scheduleClickUp(xc, yc)}
                         } onMouseOver={() => scheduleHover(xc, yc)} key={"click-event-" + xc + "-" + yc} style={{fill: "rgba(0, 0, 0, 0)", cursor: "crosshair"}}></rect>
                     ))}
                 </g>))}
             </g>
+
+            {/* Render avoid times and set up event listeners for clicks */}
             {(State.schedule != null && options.removeUT != undefined) && (<><g>
                 {State.schedule.avoid_times.map((hours_list, i) => (<g key={"avoid-x-day-" + i}>
                     {hours_list.map((hour_set, j) => {
@@ -157,6 +160,7 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
             </g>
             </>)}
 
+            {/* Draw the vertical grid lines, should be highest z-index */}
             <g fill="white">
                 {Array.from(new Array(6), (x, i) => i).map(i => (<g key={"vertical-" + i}>
                     <rect x={getX(i) + "%"} y={marginy_top + "%"} width="2" height={h + "%"}></rect>
@@ -164,7 +168,7 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
             </g>
 
         </svg>
-    )
+    );
     State.setColorKey(State.color_key);
     return r;
 }

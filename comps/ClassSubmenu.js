@@ -45,6 +45,8 @@ export default function ClassSubmenu({cl, State, submit}) {
             <div style={{marginTop: "15px", fontSize: "14pt"}}>
                 <a target="_blank" className={styles.link_colored} href={"https://viz-public.cu.edu/t/Boulder/views/Class_Search_Crse_FCQ/FCQResults?Subject-Course=" + cl.title.replace(" ", "-")}>See Evaluations</a>
             </div>
+
+            {/* Enrolled section dropdown */}
             <div style={{marginTop: "30px"}}>
                 <div style={{marginBottom: "10px"}}>
                     <span>Enrolled Section:</span>
@@ -63,6 +65,7 @@ export default function ClassSubmenu({cl, State, submit}) {
                 <div> 
                     <span>Preferred Instructors:</span>
                 </div>
+                {/* List of instructors, with event when checkbox clicked */}
                 <List>
                     {instr_list.map((instructor, i) => {
 

@@ -12,6 +12,7 @@ export default function Settings({semester, State}){
 
     return (
         <>
+        {/* Semester dropdown */}
         <div>
             <Select size="small" value={1} sx={{color: "white", width: "100%"}}> 
                 {semesters.map((sem, i) => {
@@ -20,10 +21,11 @@ export default function Settings({semester, State}){
                     );
                     else return (
                         <a key={"semester-" + i} href={"/?semester=" + sem.toLowerCase().replace(" ", "-")}><MenuItem>{sem}</MenuItem></a>
-                    )
+                    );
                 })}
             </Select>
         </div>
+        {/* Waitlisted classes checkbox */}
         <div className='pointer_hover'>
             <ListItem style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "10px"}}>
                 <Checkbox sx={{color: "white"}}

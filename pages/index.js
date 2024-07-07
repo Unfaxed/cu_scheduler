@@ -113,7 +113,7 @@ export default function Index({analytics, srcdb, semester}) {
             }
     
             setScheduleSVG(<Schedule width={width} height={(window.innerHeight*0.9)-4} State={State} 
-            scheduleClick={scheduleClick} options={options}></Schedule>);
+            scheduleClick={scheduleClick} options={options}></Schedule>); //render schedule
         }
 
         update();
@@ -176,7 +176,7 @@ export default function Index({analytics, srcdb, semester}) {
 
     }, [schedule, preschedule, ut_editing, submitted]);
 
-    function scheduleClick(day, time, is_upclick){
+    function scheduleClick(day, time, is_upclick){ //click event listener
         if (ut_editing == null && !is_upclick){
             var start = Math.max(0, time - 6);
             var avoid_times = schedule.avoid_times;
@@ -200,7 +200,7 @@ export default function Index({analytics, srcdb, semester}) {
         setSchedule({classes: schedule.classes, avoid_times: ut_list});
     }
 
-    async function addPrescheduleClass(class_code){
+    async function addPrescheduleClass(class_code){ //user can type in class or select from suggestion dropdown, fetch data from backend
         if (class_code.length == 0 || loading) return;
         const spl = class_code.split(" ");
         if (spl.length != 2 || spl[0].length != 4 || spl[1].length != 4) return; //class code format (ex. CSCI 1000)
@@ -253,7 +253,7 @@ export default function Index({analytics, srcdb, semester}) {
         setPreSchedule(nps);
     }
 
-    async function submit(lastAddedClass){ //send preschedule to optimizer
+    async function submit(lastAddedClass){ //send preschedule to optimizer to generate schedule suggestions
         if (loading) return;
         if (preschedule == null || preschedule.length == 0) {
             setSchedule({classes: [], avoid_times: schedule.avoid_times});
@@ -369,6 +369,7 @@ export default function Index({analytics, srcdb, semester}) {
                 <div className={styles.menu1_settings}>
                     <TextField fullWidth label="Enter your classes" sx={{input: {color: "white", background: "#37373f"}}} id="class-search"></TextField>
                     
+                    {/* Class name suggestions */}
                     {class_suggestions.length > 0 && (<div className={styles.class_suggestions}>
                         {class_suggestions.map((cs, i) => (
                             <div className={styles.class_suggestion + " " + (i % 2 == 0 ? styles.class_suggestion_a : styles.class_suggestion_b)} onClick={() => addPrescheduleClass(cs)} key={"class-suggestion-" + i}>
@@ -378,6 +379,7 @@ export default function Index({analytics, srcdb, semester}) {
                     </div>)}
 
                     {class_submenu == null ? (<>
+                        {/* Main settings view, shows class list */}
                         <div style={{marginTop: "15px"}}>
                             <div className={styles.card} style={preschedule.length == 0 ? {} : {paddingTop: 0}}>
                                 {preschedule.map((cl, i) => (
@@ -396,10 +398,13 @@ export default function Index({analytics, srcdb, semester}) {
                         <div style={{marginTop: "30px"}}>
                             <Settings semester={semester} State={State}></Settings>
                         </div>
-                    </>) : (
+                    </>) : (<>
+                        {/* Class settings view */}
                         <ClassSubmenu cl={preschedule[class_submenu]} State={State} submit={submit}></ClassSubmenu>
-                    )}
+                    </>)}
                 </div>
+
+                {/* Bottom loading gif & registration checklist */}
                 <div className={styles.menu1_submit}>
                     {class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
                         <center>
@@ -411,20 +416,11 @@ export default function Index({analytics, srcdb, semester}) {
                         <Image src="/loading.gif" width="32" height="32" alt="Loading"></Image>
                     </div>)}
                     <Button variant={(loading || schedule.classes.length == 0) ? "disabled" : "contained"} onClick={() => setChecklistVisible(true)} style={{backgroundColor: "#CFB87C"}}>SHOW CHECKLIST</Button>
-                    
-                    
-                    {false && (<center>
-                        {loading ? (<div style={{marginTop: "6px", marginRight: "10px"}}>
-                            <Image src="/loading.gif" width="32" height="32" alt="Loading"></Image>
-                        </div>) : 
-                        (<div style={{marginTop: "10px"}}>
-                            <b>{status_message}</b>
-                        </div>)}
-                    </center>)}
                 </div>
             </div>
             </>)}
 
+            {/* Schedule container */}
             <div className={styles.schedule_container}>
                 <div style={{display: "flex", flexWrap: "nowrap"}}>
                     {submitted && (<div>
@@ -438,9 +434,6 @@ export default function Index({analytics, srcdb, semester}) {
                         ))}
                     </div>)}
                     <div>
-                        {false && (<div style={{width: "95%", textAlign: "right", marginTop: "15px", fontSize: "12pt"}}>
-                            <a href="/">Login</a>
-                        </div>)}
                         <div>
                             {schedule_svg}
                         </div>
@@ -449,6 +442,8 @@ export default function Index({analytics, srcdb, semester}) {
                 <ScheduleFooter></ScheduleFooter>
             </div>
         </div>
+
+        {/* Registration checklist */}
         <Popup setVisible={setChecklistVisible} visible={checklist_visible}>
             <div className={styles.checklist_container}>
                 <div style={{marginBottom: "20px"}}>Registration Checklist:</div>
@@ -476,6 +471,8 @@ export default function Index({analytics, srcdb, semester}) {
             ))}
             </div>
         </Popup>
+
+        {/* Menu icon for mobile */}
         {!menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {setMenuShown(true); setUTEditing(null);}}>
             <Image src="/icons/menu.png" alt="Show menu" width="25" height="25"></Image>
         </div>)}
