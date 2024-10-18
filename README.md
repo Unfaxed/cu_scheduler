@@ -1,7 +1,7 @@
 
 # CU Scheduler
 
-This is a project to improve the experience of building a course schedule for CU students. It is a website that lets you build a schedule around which hours you will be available, and also lets you avoid waitlisted classes. This is a personal project that I created, and not affiliated with the university.
+Use this project to quickly build next semester's course schedule around your available times! Automatically avoid waitlisted classes and choose which professors you prefer. This is a personal project that I created to solve the difficulties of creating a class schedule, it is not affiliated with the CU Boulder.
 
 See the deployed project at [cuscheduler.com](www.cuscheduler.com)!
 
