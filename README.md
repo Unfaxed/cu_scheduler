@@ -1,10 +1,12 @@
 
-CU SCHEDULER
+# CU Scheduler
 
-This is a project that significantly improves the scheduling experience for CU students. It lets you build a schedule around which hours work best for your schedule, and also lets you avoid waitlisted classes. It is important to clarify that this project is not affiliated with the University of Colorado, this is a personal project that accesses the class API. 
+This is a project to improve the experience of building a course schedule for CU students. It is a website that lets you build a schedule around which hours you will be available, and also lets you avoid waitlisted classes. This is a personal project that I created, and not affiliated with the university.
 
+See the deployed project at [cuscheduler.com](www.cuscheduler.com)!
 
-You can see the deployed project at www.cuscheduler.com
+## Details
 
+This project uses Integer Linear Programming (ILP) under the hood to optimize the placement of classes by minimizing a cost function. There are many factors that go into the cost function, such as if it is marked to avoid the timeframe or if the professor is marked as unpreferred. This site is developed with Next.JS on the front- and back-end.
 
-This project uses Integer Linear Programming (ILP) under the hood to optimize the placement of classes by minimizing a cost function. It factors in some probability into the cost function to create multiple variations of a schedule (there are more sophisticated ways than using probability, I may implement something more advanced in the future).
+![Homepage Screenshot](public/cuscheduler_screenshot.png)
