@@ -323,7 +323,7 @@ export default function Index({analytics, srcdb, semester}) {
             setFullScheduleSet(res.schedules);
             setSchedule(s);
             setSubmitted(true);
-            setStatusText("✅ Created schedule");
+            setStatusText("");
 
             if (conflict_class != null){
                 if (prescheduleClassCount(preschedule, conflict_class) == 0) setConflictingClass(null);
