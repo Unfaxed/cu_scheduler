@@ -11,10 +11,6 @@ export default function ScheduleFooter(){
     return (
         <div className={styles.schedule_footer_container}>
             <center>
-                {/* <div style={{display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", justifyContent: "center", margin: "12px"}}>
-                        <Link target="_blank" href="mailto:almc8368@colorado.edu">Contact</Link>
-                        <Link target="_blank" href="https://paypal.me/c7dev">Donate</Link>
-                </div> */}
                 <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: "10px", fontSize: "10pt", paddingBottom: "", margin: "14px"}}>
                     <div>
                         <span style={{color: "#999"}}>Created by Alex McDonald</span>
