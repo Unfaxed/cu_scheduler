@@ -3,7 +3,7 @@
 
 Use this website to quickly build next semester's course schedule around your available times! Automatically avoid waitlisted classes and select preferred instructors. This is a personal project that I created to solve the difficulties of creating a class schedule, it is not affiliated with CU Boulder.
 
-See the deployed project at [cuscheduler.com](www.cuscheduler.com)!
+See the deployed project at [cuscheduler.com](https://www.cuscheduler.com)!
 
 ## Details
 
