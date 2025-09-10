@@ -20,8 +20,8 @@ import { sha256 } from "js-sha256"
 import { DEFAULT_SEMESTER, YEAR_DB_INFO, MAX_MODEL_TIME } from "../lib/json/consts";
 
 export function getServerSideProps(context){
-    var srcdb = YEAR_DB_INFO[DEFAULT_SEMESTER.toLowerCase().replace(" ", "")];
-    var semester = DEFAULT_SEMESTER;
+    let srcdb = YEAR_DB_INFO[DEFAULT_SEMESTER.toLowerCase().replace(" ", "")];
+    let semester = DEFAULT_SEMESTER;
 
     if (context.query != undefined && context.query.semester != undefined){
         const srcdb_lookup = YEAR_DB_INFO[context.query.semester.replace("-", "")];
@@ -40,226 +40,256 @@ export function getServerSideProps(context){
     }
 }
 
-export default function Index({analytics, srcdb, semester}) {
+export class SchedulePage {
 
-    const [schedule_svg, setScheduleSVG] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [status_message, setStatusText] = useState("Brought to you by a fellow Buff!");
-    const [preschedule, setPreSchedule] = useState([]);
-    const [schedule, setSchedule] = useState({
-        classes: [],
-        avoid_times: [[], [], [], [], []]
-    });
-    const [submitted, setSubmitted] = useState(false);
-    const [await_submit, setAwaitSubmit] = useState(false);
-    const [class_suggestions, setClassSuggestions] = useState([]);
-    const [color_key, setColorKey] = useState({});
-    const [ut_editing, setUTEditing] = useState(null); //[day, index, top]
-    const [full_schedule_set, setFullScheduleSet] = useState([[]]);
-    const [selected_schedule_index, setSelectedScheduleIndex] = useState(0);
-    const [conflict_class, setConflictingClass] = useState(null);
-    const [checklist_visible, setChecklistVisible] = useState(false);
-    const [menu_shown, setMenuShown] = useState(true);
-    const [show_menu_x, setShowMenuXButton] = useState(false);
-    const [checklist_selected, setChecklistSelected] = useState([]); 
-    const [results_cache, setResultsCache] = useState({});
-    const [class_submenu, setClassSubmenu] = useState(null);
-    const [avoid_waitlist, setAvoidWaitlist] = useState(true);
+    constructor ({analytics, srcdb, semester}) {
+        this.analytics = analytics;
+        this.srcdb = srcdb;
+        this.semester = semester;
 
-    const State = {
-        schedule_svg, setScheduleSVG, loading, setLoading, status_message, setStatusText, preschedule, setPreSchedule,
-        schedule, setSchedule, submitted, setSubmitted, await_submit, setAwaitSubmit, class_suggestions, setClassSuggestions,
-        color_key, setColorKey, full_schedule_set, setFullScheduleSet,
-        selected_schedule_index, setSelectedScheduleIndex, conflict_class, setConflictingClass, checklist_visible, setChecklistVisible,
-        menu_shown, setMenuShown, show_menu_x, setShowMenuXButton, checklist_selected, setChecklistSelected, results_cache, setResultsCache,
-        class_submenu, setClassSubmenu, avoid_waitlist, setAvoidWaitlist, ut_editing, setUTEditing
+        this.setScheduleData = () => {}; // stub for setter
+
+        //define states
+        [this.schedule_svg, this.setScheduleSVG] = useState(null);
+        [this.loading, this.setLoading] = useState(false);
+        [this.status_message, this.setStatusText] = useState("Brought to you by a fellow Buff!");
+        [this.preschedule, this.setPreSchedule] = useState([]);
+        [this._schedule, this.setScheduleData] = useState({
+            classes: [],
+            avoid_times: [[], [], [], [], []]
+        });
+        [this.submitted, this.setSubmitted] = useState(false);
+        [this.await_submit, this.setAwaitSubmit] = useState(false);
+        [this.class_suggestions, this.setClassSuggestions] = useState([]);
+        [this.color_key, this.setColorKey] = useState({});
+        [this.ut_editing, this.setUTEditing] = useState(null); //[day, index, top]
+        [this.full_schedule_set, this.setFullScheduleSet] = useState([[]]);
+        [this.selected_schedule_index, this.setSelectedScheduleIndex] = useState(0);
+        [this.conflict_class, this.setConflictingClass] = useState(null);
+        [this.checklist_visible, this.setChecklistVisible] = useState(false);
+        [this.menu_shown, this.setMenuShown] = useState(true);
+        [this.show_menu_x, this.setShowMenuXButton] = useState(false);
+        [this.checklist_selected, this.setChecklistSelected] = useState([]); 
+        [this.results_cache, this.setResultsCache] = useState({});
+        [this.class_submenu, this.setClassSubmenu] = useState(null);
+        [this.avoid_waitlist, this.setAvoidWaitlist] = useState(true);
+
+        //effect hooks
+        useEffect(this.onScheduleUpdateEffect, [this.schedule, this.preschedule, this.ut_editing, this.submitted]);
+        useEffect(() => this.submit(), [this.avoid_waitlist]);
     }
 
-    useEffect(() => {
-        if (typeof window == "undefined") return;
+    get schedule() {
+        return this._schedule;
+    }
 
-        if (await_submit){
-            submit();
-            setAwaitSubmit(false);
+    set schedule(newSchedule) {
+        if (!newSchedule) newSchedule = {};
+
+        newSchedule.classes = newSchedule.classes ?? this.schedule.classes ?? [];
+        newSchedule.avoid_times = newSchedule.avoid_times ?? this.schedule.avoid_times ?? [[], [], [], [], []];
+
+        this.setScheduleData(newSchedule);
+        this._schedule = newSchedule;
+    }
+
+    searchBoxType = (event) => { //search & show class name suggestions
+        const t = event.target.value;
+        const suggestions = [];
+        if (t.length == 0) {
+            this.setClassSuggestions([]);
+            return;
+        }
+        const word_split = t.split(" ");
+
+        if (word_split.length >= 2){
+            const code = (word_split[0] + " " + word_split[1]).toUpperCase().replace(":", "");
+            if (name_map[code] != undefined) suggestions.push(code);
         }
 
-        window.addEventListener("beforeunload", function (e) {
-            if (preschedule.length == 0) return;
-            var confirmationMessage = 'Changes you made may not be saved.';
-        
-            (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-            return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
-        });
-
-        function update(){ //refresh schedule states and fit to screen size
-            var width = window.innerWidth;
-            if (menu_shown){
-                if (window.innerWidth > 650) { //update with phone threshold
-                    const css_percentage = 0.25, css_min = 270, css_max = 410; //menu1 class
-                    const percent = window.innerWidth*css_percentage;
-        
-                    if (percent < css_min) width = window.innerWidth - css_min;
-                    else if (percent > css_max) width = window.innerWidth - css_max;
-                    else width = window.innerWidth*(1-css_percentage);
-                }
-                if (submitted) width -= 55;
-            }
-
-            setShowMenuXButton(window.innerWidth <= 750);
-
-            const options = {
-                scheduleClickUp: (x, y) => scheduleClick(x, y, true),
-                removeUT
-            }
-    
-            setScheduleSVG(<Schedule width={width} height={(window.innerHeight*0.9)-4} State={State} 
-            scheduleClick={scheduleClick} options={options}></Schedule>); //render schedule
-        }
-
-        update();
-        window.addEventListener("resize", update);
-        document.onkeydown = async (e) => {
-            if (e.keyCode == 13){ //enter
-                const textinput = document.getElementById("class-search").value;
-                addPrescheduleClass(textinput);
-            }
-            else if (e.keyCode == 27){
-                setUTEditing(null);
-            }
-        }
-
-        const search_box = document.getElementById("class-search");
-        const searchBoxType = (e) => { //search & show class name suggestions
-            const t = e.target.value;
-            const suggestions = [];
-            if (t.length == 0) {
-                setClassSuggestions([]);
-                return;
-            }
-            const word_split = t.split(" ");
-
-            if (word_split.length >= 2){
-                const code = (word_split[0] + " " + word_split[1]).toUpperCase().replace(":", "");
-                if (name_map[code] != undefined) suggestions.push(code);
-            }
-
-            for (let i = 0; i < word_split.length; i++){
-                const word = word_split[i].toLowerCase();
-                if (word.length > 3){
-                    const res = lookup_map[word];
-                    if (res != undefined) {
-                        for (let j = 0; j < res.length; j++) {
-                            var add = true;
-                            //intersect the results for each word in search
-                            if (!suggestions.includes(res[j])){
-                            for (let k = 0; k < word_split.length; k++){
-                                if (i != k && !name_map[res[j]].toLowerCase().includes(word_split[k].toLowerCase())) {
-                                    add = false;
-                                    break;
-                                }
+        for (let i = 0; i < word_split.length; i++){
+            const word = word_split[i].toLowerCase();
+            if (word.length > 3){
+                const res = lookup_map[word];
+                if (res != undefined) {
+                    for (let j = 0; j < res.length; j++) {
+                        let add = true;
+                        //intersect the results for each word in search
+                        if (!suggestions.includes(res[j])){
+                        for (let k = 0; k < word_split.length; k++){
+                            if (i != k && !name_map[res[j]].toLowerCase().includes(word_split[k].toLowerCase())) {
+                                add = false;
+                                break;
                             }
-                            if (add) suggestions.push(res[j]);
-                            }
+                        }
+                        if (add) suggestions.push(res[j]);
                         }
                     }
                 }
             }
-
-            setClassSuggestions(suggestions);
         }
-        if (search_box != null) search_box.addEventListener("input", searchBoxType);
+
+        this.setClassSuggestions(suggestions);
+    }
+
+    update = () => { //refresh schedule states and fit to screen size
+        let width = window.innerWidth;
+        if (this.menu_shown){
+            if (window.innerWidth > 650) { //update with phone threshold
+                const css_percentage = 0.25, css_min = 270, css_max = 410; //menu1 class
+                const percent = window.innerWidth*css_percentage;
+    
+                if (percent < css_min) width = window.innerWidth - css_min;
+                else if (percent > css_max) width = window.innerWidth - css_max;
+                else width = window.innerWidth*(1-css_percentage);
+            }
+            if (this.submitted) width -= 55;
+        }
+
+        this.setShowMenuXButton(window.innerWidth <= 750);
+
+        const options = {
+            scheduleClickUp: (x, y) => this.scheduleClick(x, y, true),
+            removeUT: this.removeUT
+        }
+
+        this.setScheduleSVG(
+            <Schedule width={width} height={(window.innerHeight*0.9)-4} state={this} 
+                scheduleClick={this.scheduleClick} options={options}></Schedule>
+        ); //render schedule
+    }
+
+    onScheduleUpdateEffect = () => {
+        if (!window) return;
+
+        if (this.await_submit) {
+            this.submit();
+            this.setAwaitSubmit(false);
+        }
+
+        window.addEventListener("beforeunload", (event) => {
+            if (this.preschedule.length == 0) return;
+            let confirmationMessage = 'Changes you made may not be saved.';
+        
+            (event || window.event).returnValue = confirmationMessage; //Gecko + IE
+            return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+        });
+
+        this.update();
+        window.addEventListener("resize", this.update);
+        document.onkeydown = async (event) => {
+            if (event.keyCode == 13){ //enter
+                const textinput = document.getElementById("class-search").value;
+                this.addPrescheduleClass(textinput);
+            }
+            else if (event.keyCode == 27){
+                this.setUTEditing(null);
+            }
+        }
+
+        const search_box = document.getElementById("class-search");
+
+        if (search_box != null) search_box.addEventListener("input", this.searchBoxType);
 
         return () => {
-            window.removeEventListener("resize", update);
-            if (search_box != null) search_box.removeEventListener("input", searchBoxType);
+            window.removeEventListener("resize", this.update);
+            if (search_box != null) search_box.removeEventListener("input", this.searchBoxType);
         }
+    }
 
-    }, [schedule, preschedule, ut_editing, submitted]);
-
-    function scheduleClick(day, time, is_upclick){ //click event listener
-        if (ut_editing == null && !is_upclick){
-            var start = Math.max(0, time - 6);
-            var avoid_times = schedule.avoid_times;
+    scheduleClick = (day, time, is_upclick) => { //click event listener
+        if (this.ut_editing == null && !is_upclick){
+            let start = Math.max(0, time - 6);
+            let avoid_times = this.schedule.avoid_times;
             avoid_times[day].push([start, Math.min(start + 12, MAX_MODEL_TIME)]);
             avoid_times = removeOverlappingUT(day, avoid_times);
-            setSchedule({classes: schedule.classes, avoid_times});
-            submit();
+            this.schedule = {classes: this.schedule?.classes, avoid_times: this.avoid_times};
+            this.submit();
         } else { //save after edit
-            const avoid_times = removeOverlappingUT(day, schedule.avoid_times);
-            setUTEditing(null);
-            setSchedule({classes: schedule.classes, avoid_times});
-            submit();
+            const avoid_times = removeOverlappingUT(day, this.schedule?.avoid_times);
+            this.setUTEditing(null);
+            this.schedule = {classes: this.schedule?.classes, avoid_times: this.avoid_times};
+            this.submit();
         }
     }
 
-    function removeUT(day, index){
-        const ut_list = schedule.avoid_times;
-        ut_list[day].splice(index, 1);
-        setAwaitSubmit(true);
-        setUTEditing(null);
-        setSchedule({classes: schedule.classes, avoid_times: ut_list});
+    scheduleHover = (day, time) => {
+        const ut_editing = this.ut_editing;
+        if (ut_editing != null) {
+            const avoid_times = this.schedule.avoid_times;
+            const ut = avoid_times[ut_editing.day][ut_editing.index];
+            if ((ut_editing.top && time > ut[1]-4) || (!ut_editing.top && time < ut[0]+4)) return;
+            ut[ut_editing.top ? 0 : 1] = time;
+            avoid_times[ut_editing.day][ut_editing.index] = ut;
+
+            this.schedule = {classes: this.schedule.classes, avoid_times};
+        }
     }
 
-    async function addPrescheduleClass(class_code){ //user can type in class or select from suggestion dropdown, fetch data from backend
-        if (class_code.length == 0 || loading) return;
-        const spl = class_code.split(" ");
-        if (spl.length != 2 || spl[0].length != 4 || spl[1].length != 4) return; //class code format (ex. CSCI 1000)
+    removeUT = (day, index) => {
+        const ut_list = this.schedule.avoid_times;
+        ut_list[day].splice(index, 1);
+        this.setAwaitSubmit(true);
+        this.setUTEditing(null);
+        this.schedule = {classes: this.schedule?.classes, avoid_times: ut_list};
+    }
 
-        setClassSuggestions([]);
-        setLoading(true);
+    addPrescheduleClass = async (class_code) => { //user can type in class or select from suggestion dropdown, fetch data from backend
+        if (class_code.length == 0 || this.loading) return;
+        const class_code_split = class_code.split(" ");
+        if (class_code_split.length != 2 || class_code_split[0].length != 4 || class_code_split[1].length != 4) return; //class code format (ex. CSCI 1000)
 
-        //const preschedule_add = await getPreScheduleClass(class_code.toUpperCase(), context.cors_anywhere);
-        const preschedule_add_f = await fetch("/api/class_data?" + new URLSearchParams({name: class_code, srcdb})); //fetch data from api
+        this.setClassSuggestions([]);
+        this.setLoading(true);
+
+        const preschedule_add_f = await fetch("/api/class_data?" + new URLSearchParams({name: class_code, srcdb: this.srcdb})); //fetch data from api
         const preschedule_add = await preschedule_add_f.json();
         if (preschedule_add != null) {
-            if (preschedule_add.length == prescheduleClassCount(preschedule, class_code)) {
-                setLoading(false);
+            if (preschedule_add.length == prescheduleClassCount(this.preschedule, class_code)) {
+                this.setLoading(false);
                 return;
             }
             for (let i = 0; i < preschedule_add.length; i++){
-                var add = true;
-                for (let j = 0; j < preschedule.length; j++){
-                    if (preschedule[j].title == preschedule_add[i].title && preschedule[j].type == preschedule_add[i].type){
+                let add = true;
+                for (let j = 0; j < this.preschedule.length; j++){
+                    if (this.preschedule[j].title == preschedule_add[i].title && this.preschedule[j].type == preschedule_add[i].type) {
                         add = false;
                         break;
                     }
                 }
-                if (add) preschedule.push(preschedule_add[i]);
+                if (add) this.preschedule.push(preschedule_add[i]);
             }
         } else {
-            setStatusText("❌ Could not find this class!");
-            setLoading(false);
+            this.setStatusText("❌ Could not find this class!");
+            this.setLoading(false);
             return;
         }
 
-        setClassSubmenu(null);
-        setPreSchedule(preschedule);
-        //update(window, preschedule);
-        //setLoading(false);
-        submit(class_code);
+        this.setClassSubmenu(null);
+        this.setPreSchedule(this.preschedule); //update state
+        this.submit(class_code);
         document.getElementById("class-search").value = "";
 
     }
 
-    function removePrescheduleClass(cl){
+    removePrescheduleClass = (cl) => {
         const nps = [];
         for (let j = 0; j < preschedule.length; j++) {
             if (preschedule[j].title != cl.title || preschedule[j].type != cl.type) nps.push(preschedule[j]);
         }
-        //delete color_key[cl.title];
-        //setColorKey(color_key);
-        setClassSubmenu(null);
-        setAwaitSubmit(true);
-        setPreSchedule(nps);
+        this.setClassSubmenu(null);
+        this.setAwaitSubmit(true);
+        this.setPreSchedule(nps);
     }
 
-    async function submit(lastAddedClass){ //send preschedule to optimizer to generate schedule suggestions
-        if (loading) return;
-        if (preschedule == null || preschedule.length == 0) {
-            setSchedule({classes: [], avoid_times: schedule.avoid_times});
-            setFullScheduleSet([[]]);
-            setSelectedScheduleIndex(0);
-            setSubmitted(false);
+    submit = async (lastAddedClass) => { //send preschedule to optimizer to generate schedule suggestions
+        const preschedule = this.preschedule;
+        if (this.loading) return;
+        if (this.preschedule == null || this.preschedule.length == 0) {
+            this.schedule = {classes: [], avoid_times: this.schedule.avoid_times};
+            this.setFullScheduleSet([[]]);
+            this.setSelectedScheduleIndex(0);
+            this.setSubmitted(false);
             return;
         }
 
@@ -279,19 +309,19 @@ export default function Index({analytics, srcdb, semester}) {
         }
         
         const params = JSON.stringify({
-            avoid_times: schedule.avoid_times,
-            avoid_waitlist,
+            avoid_times: this.schedule.avoid_times,
+            avoid_waitlist: this.avoid_waitlist,
             preschedule: pre2
         });
 
         const hash = sha256(params);
-        var res;
-        var cached = false;
-        if (results_cache[hash] != undefined){
-            res = results_cache[hash];
+        let res;
+        let cached = false;
+        if (this.results_cache[hash] != undefined){
+            res = this.results_cache[hash];
             cached = true;
         } else {
-            setLoading(true);
+            this.setLoading(true);
             const res1 = await fetch("/api/optimizer", {
                 method: "POST",
                 body: params
@@ -300,49 +330,49 @@ export default function Index({analytics, srcdb, semester}) {
 
             if (res1.status != 200 || res.schedules == undefined){
                 console.error(res.error_msg);
-                setLoading(false);
-                setStatusText("❌ There was an error!");
+                this.setLoading(false);
+                this.setStatusText("❌ There was an error!");
                 return;
             }
 
-            results_cache[hash] = res;
-            setResultsCache(results_cache);
+            this.results_cache[hash] = res;
+            this.setResultsCache(this.results_cache);
         }
-        setLoading(false);
 
-        if (!res.conflictions) {
-            var schedule_index = selected_schedule_index;
+        this.setLoading(false);
+
+        if (!res.conflictions) { //success
+            let schedule_index = this.selected_schedule_index;
             
-            if (!cached || schedule.classes.length != preschedule.length || res.schedules.length <= schedule_index){
-                setSelectedScheduleIndex(0);
+            if (!cached || this.schedule?.classes?.length != preschedule.length || res.schedules.length <= schedule_index){
+                this.setSelectedScheduleIndex(0);
                 schedule_index = 0;
             }
             
             const s = {classes: res.schedules[schedule_index].classes};
-            s.avoid_times = schedule.avoid_times;
-            setFullScheduleSet(res.schedules);
-            setSchedule(s);
-            setSubmitted(true);
-            setStatusText("");
+            s.avoid_times = this.schedule?.avoid_times;
+            this.setFullScheduleSet(res.schedules);
+            this.schedule = s;
+            this.setSubmitted(true);
+            this.setStatusText("");
 
-            if (conflict_class != null){
-                if (prescheduleClassCount(preschedule, conflict_class) == 0) setConflictingClass(null);
+            if (this.conflict_class != null){
+                if (this.prescheduleClassCount(preschedule, this.conflict_class) == 0) this.setConflictingClass(null);
             }
 
-        } else {
-            setStatusText("❌ Impossible to fit this class!");
-            setSubmitted(false);
-            setSchedule({classes: [], avoid_times: schedule.avoid_times});
-            if (lastAddedClass != null && conflict_class == null) setConflictingClass(lastAddedClass.toUpperCase());
+        } else { //at least 1 class has to be dropped from the preschedule list
+            this.setStatusText("❌ Impossible to fit this class!");
+            this.setSubmitted(false);
+            this.schedule = {classes: [], avoid_times: this.schedule.avoid_times};
+            if (lastAddedClass != null && this.conflict_class == null) this.setConflictingClass(lastAddedClass.toUpperCase());
         }
     }
 
-    useEffect(() => {
-        submit();
-    }, [avoid_waitlist]);
+}
 
-    //old chip:
-    //<Chip key={"class-chip-" + i} label={cl.title+ " " + cl.type} variant="filled" onDelete={() => removePrescheduleClass(cl)} sx={{bgcolor: (conflict_class != null && conflict_class.toLowerCase() == cl.title.toLowerCase()) ? "red" : "white", marginRight: "3px", marginBottom: "3px"}}></Chip>
+export default function Index({analytics, srcdb, semester}) {
+
+    const schedulePage = new SchedulePage({analytics, srcdb, semester});
 
     return(
         <>
@@ -360,8 +390,8 @@ export default function Index({analytics, srcdb, semester}) {
             )}
         </Head>
         <div className={styles.main_container}>
-            {menu_shown && (<><div className={styles.menu1}>
-                {show_menu_x && (<div style={{position: "absolute", top: "10px", right: "-30px", cursor: "pointer"}} onClick={() => {setMenuShown(false); setUTEditing(null);}}>
+            {schedulePage.menu_shown && (<><div className={styles.menu1}>
+                {schedulePage.show_menu_x && (<div style={{position: "absolute", top: "10px", right: "-30px", cursor: "pointer"}} onClick={() => {schedulePage.setMenuShown(false); schedulePage.setUTEditing(null);}}>
                     <Image src="/icons/close.png" alt="Close Menu" width="21" height="21"></Image>
                 </div>)}
 
@@ -370,24 +400,24 @@ export default function Index({analytics, srcdb, semester}) {
                     <TextField fullWidth label="Enter your classes" sx={{input: {color: "white", background: "#37373f"}}} id="class-search"></TextField>
                     
                     {/* Class name suggestions */}
-                    {class_suggestions.length > 0 && (<div className={styles.class_suggestions}>
-                        {class_suggestions.map((cs, i) => (
-                            <div className={styles.class_suggestion + " " + (i % 2 == 0 ? styles.class_suggestion_a : styles.class_suggestion_b)} onClick={() => addPrescheduleClass(cs)} key={"class-suggestion-" + i}>
+                    {schedulePage.class_suggestions.length > 0 && (<div className={styles.class_suggestions}>
+                        {schedulePage.class_suggestions.map((cs, i) => (
+                            <div className={styles.class_suggestion + " " + (i % 2 == 0 ? styles.class_suggestion_a : styles.class_suggestion_b)} onClick={() => schedulePage.addPrescheduleClass(cs)} key={"class-suggestion-" + i}>
                                 {cs + ": " + (name_map[cs] || "No Description")}
                             </div>
                         ))}
                     </div>)}
 
-                    {class_submenu == null ? (<>
+                    {schedulePage.class_submenu == null ? (<>
                         {/* Main settings view, shows class list */}
                         <div style={{marginTop: "15px"}}>
-                            <div className={styles.card} style={preschedule.length == 0 ? {} : {paddingTop: 0}}>
-                                {preschedule.map((cl, i) => (
+                            <div className={styles.card} style={schedulePage.preschedule.length == 0 ? {} : {paddingTop: 0}}>
+                                {schedulePage.preschedule.map((cl, i) => (
                                     <ListElement key={"class-chip-" + i} text={cl.title + " " + cl.type} onClick={(event) => {
-                                        setClassSubmenu(i)
-                                    }} onDelete={() => removePrescheduleClass(cl)} error={cl.title == conflict_class}></ListElement>
+                                        schedulePage.setClassSubmenu(i)
+                                    }} onDelete={() => schedulePage.removePrescheduleClass(cl)} error={cl.title == schedulePage.conflict_class}></ListElement>
                                 ))}
-                                {preschedule.length == 0 && (<div style={{paddingLeft: "12px"}}>
+                                {schedulePage.preschedule.length == 0 && (<div style={{paddingLeft: "12px"}}>
                                     <span style={{fontSize: "8pt", color: "rgba(255, 255, 255, 0.50)"}}>Search your classes to begin</span>
                                 </div>)}
                             </div>
@@ -396,26 +426,26 @@ export default function Index({analytics, srcdb, semester}) {
                             <span style={{fontSize: "9pt", color: "rgba(255, 255, 255, 0.5)"}}>Click the schedule to set unavailable times</span>
                         </div>
                         <div style={{marginTop: "30px"}}>
-                            <Settings semester={semester} State={State}></Settings>
+                            <Settings semester={schedulePage.semester} state={schedulePage}></Settings>
                         </div>
                     </>) : (<>
                         {/* Class settings view */}
-                        <ClassSubmenu cl={preschedule[class_submenu]} State={State} submit={submit}></ClassSubmenu>
+                        <ClassSubmenu cl={schedulePage.preschedule[schedulePage.class_submenu]} state={schedulePage} submit={schedulePage.submit}></ClassSubmenu>
                     </>)}
                 </div>
 
                 {/* Bottom loading gif & registration checklist */}
                 <div className={styles.menu1_submit}>
-                    {class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
+                    {schedulePage.class_submenu == null && (<div style={{position: "absolute", top: "-40px", fontSize: "12pt", width: "calc(100% - 20px)"}}>
                         <center>
-                            <span><b>{status_message}</b></span>
+                            <span><b>{schedulePage.status_message}</b></span>
                         </center>
                     </div>)}
                     
-                    {loading && (<div style={{marginTop: "6px", marginRight: "10px"}}>
+                    {schedulePage.loading && (<div style={{marginTop: "6px", marginRight: "10px"}}>
                         <Image src="/loading.gif" width="32" height="32" alt="Loading"></Image>
                     </div>)}
-                    <Button variant={(loading || schedule.classes.length == 0) ? "disabled" : "contained"} onClick={() => setChecklistVisible(true)} style={{backgroundColor: "#CFB87C"}}>SHOW CHECKLIST</Button>
+                    <Button variant={(schedulePage.loading || schedulePage.classes?.length == 0) ? "disabled" : "contained"} onClick={() => schedulePage.setChecklistVisible(true)} style={{backgroundColor: "#CFB87C"}}>SHOW CHECKLIST</Button>
                 </div>
             </div>
             </>)}
@@ -423,11 +453,11 @@ export default function Index({analytics, srcdb, semester}) {
             {/* Schedule container */}
             <div className={styles.schedule_container}>
                 <div style={{display: "flex", flexWrap: "nowrap"}}>
-                    {submitted && (<div>
-                        {full_schedule_set.map((schedule_set, i) => (
-                            <div key={"schedule-number-" + i} style={selected_schedule_index == i ? {borderRight: "4px solid #FFF", backgroundColor: "#2c2c34"} : {}} className={styles.full_schedule_select_number} onClick={() => {
-                                setSchedule({avoid_times: schedule.avoid_times, classes: full_schedule_set[i].classes});
-                                setSelectedScheduleIndex(i);
+                    {schedulePage.submitted && (<div>
+                        {schedulePage.full_schedule_set.map((schedule_set, i) => (
+                            <div key={"schedule-number-" + i} style={schedulePage.selected_schedule_index == i ? {borderRight: "4px solid #FFF", backgroundColor: "#2c2c34"} : {}} className={styles.full_schedule_select_number} onClick={() => {
+                                schedulePage.schedule = {avoid_times: schedulePage.avoid_times, classes: schedulePage.full_schedule_set?.[i].classes};
+                                schedulePage.setSelectedScheduleIndex(i);
                             }}>
                                 <span><b>{i+1}</b></span>
                             </div>
@@ -435,7 +465,7 @@ export default function Index({analytics, srcdb, semester}) {
                     </div>)}
                     <div>
                         <div>
-                            {schedule_svg}
+                            {schedulePage.schedule_svg}
                         </div>
                     </div>
                 </div>
@@ -444,10 +474,10 @@ export default function Index({analytics, srcdb, semester}) {
         </div>
 
         {/* Registration checklist */}
-        <Popup setVisible={setChecklistVisible} visible={checklist_visible}>
+        <Popup setVisible={schedulePage.setChecklistVisible} visible={schedulePage.checklist_visible}>
             <div className={styles.checklist_container}>
                 <div style={{marginBottom: "20px"}}>Registration Checklist:</div>
-            {groupScheduleClasses(schedule.classes).map((checklist, i) => (
+            {groupScheduleClasses(schedulePage.schedule.classes).map((checklist, i) => (
                 <div className={styles.checklist_element} key={"checklist-group-" + i}>
                     <span style={{fontSize: "20pt"}}><b>{checklist.title }</b>{": " + name_map[checklist.title]}</span>
                     <div>
@@ -455,14 +485,15 @@ export default function Index({analytics, srcdb, semester}) {
                             <FormControlLabel label={<Typography variant="label2">{"Section " + section}</Typography>} control = {
                             <Checkbox id={"checkbox-" + checklist.title + " " + section} 
                             size="medium" sx={{color: "white"}} 
-                            defaultChecked={checklist_selected.includes(checklist.title + " " + section)} 
+                            defaultChecked={schedulePage.checklist_selected.includes(checklist.title + " " + section)} 
                             onChange={() => {
+                                const checklist_selected = schedulePage.checklist_selected;
                                 if (checklist_selected.includes(checklist.title + " " + section)){
-                                    setChecklistSelected(checklist_selected.filter(el => el != (checklist.title + " " + section)));
+                                    schedulePage.setChecklistSelected(checklist_selected.filter(el => el != (checklist.title + " " + section)));
                                     return;
                                 } else {
                                     checklist_selected.push(checklist.title + " " + section);
-                                    setChecklistSelected([...checklist_selected]);
+                                    schedulePage.setChecklistSelected([...checklist_selected]);
                                 }
                             }}></Checkbox>}></FormControlLabel>
                         ))}
@@ -473,7 +504,7 @@ export default function Index({analytics, srcdb, semester}) {
         </Popup>
 
         {/* Menu icon for mobile */}
-        {!menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {setMenuShown(true); setUTEditing(null);}}>
+        {!schedulePage.menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {schedulePage.setMenuShown(true); setUTEditing(null);}}>
             <Image src="/icons/menu.png" alt="Show menu" width="25" height="25"></Image>
         </div>)}
         </>
