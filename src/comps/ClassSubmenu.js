@@ -2,7 +2,7 @@ import styles from "../styles/Main.module.css";
 import {getInstructorList } from "../lib/utils.js";
 import { name_map } from "../lib/json/name_map.js";
 import React from "react";
-import BackArrow from "../comps/BackArrow";
+import BackArrow from "./BackArrow.js";
 import { Checkbox, List, ListItem, ListItemText, Select, MenuItem } from '@mui/material';
 
 export default function ClassSubmenu({cl, state, submit}) {

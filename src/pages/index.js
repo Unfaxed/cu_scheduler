@@ -505,7 +505,7 @@ export default function Index({analytics, srcdb, semester}) {
         </Popup>
 
         {/* Menu icon for mobile */}
-        {!schedulePage.menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {schedulePage.setMenuShown(true); setUTEditing(null);}}>
+        {!schedulePage.menu_shown && (<div style={{position: "fixed", left: "10px", top: "10px", cursor: "pointer"}} onClick={() => {schedulePage.setMenuShown(true); schedulePage.setUTEditing(null);}}>
             <Image src="/icons/menu.png" alt="Show menu" width="25" height="25"></Image>
         </div>)}
         </>
