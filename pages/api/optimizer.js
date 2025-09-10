@@ -2,12 +2,65 @@ import { isRangeIntersection, isSameSchedule } from "../../lib/utils";
 import solver from "javascript-lp-solver/src/solver";
 import { MAX_MODEL_TIME } from "../../lib/json/consts";
 
-export function randomCost(i){ //basic seeded pseudorandom function
-    const n = Math.pow(i + 8, 2)*(100/9.0)*Math.E;
-    return 10*(n - Math.trunc(n)) - 5;
+export function validateReq(req, res) {
+    if (req.method != "POST"){
+    res.status(405).json({error_msg: "Must be 'POST'"});
+        return;
+    }
+
+    if (req.body == undefined || req.body == ""){
+        res.status(400).json({error_msg: "Missing request body"});
+        return;
+    }
+
+    let data = null;
+    try {
+        data = JSON.parse(req.body);
+    } catch (ex){
+        res.status(400).json({error_msg: "Invalid JSON format for request body"});
+        return;
+    }
+
+    if (data.avoid_times == undefined || data.preschedule == undefined) {
+        res.status(400).json({error_msg: "Body must contain 'current_schedule', 'current_schedule.avoid_times', and 'preschedule'!"});
+        return;
+    }
+
+    const avoid_times = data.avoid_times, preschedule = data.preschedule;
+    if (avoid_times.length != 5){
+        res.status(400).json({error_msg: "Malformatted avoid_times: Must have an entry for each day."});
+        return;
+    }
+
+    let avoid_total = 0;
+
+    for (let i = 0; i < avoid_times.length; i++){
+        avoid_total += avoid_times[i].length;
+        if (avoid_total > 20){
+            res.status(403).json({error_msg: "Exceeded the maximum number of avoid time ranges!"});
+            return;
+        }
+    }
+
+    if (preschedule.length > 12){
+        res.status(403).json({error_msg: "Exceeded the maximum number of classes!"});
+        return;
+    }
+
+    if (preschedule.length == 0){
+        res.status(400).json({error_msg: "Preschedule is empty."});
+        return;
+    }
+
+    return data;
 }
 
 export async function solve(model, preschedule, random_itr){ //run model and parse results
+
+    function randomCost(i){ //basic seeded pseudorandom function
+        const n = Math.pow(i + 8, 2)*(100/9.0)*Math.E;
+        return 10*(n - Math.trunc(n)) - 5;
+    }
 
     //add random noise to costs
     let random_itr2 = 0;
@@ -16,12 +69,9 @@ export async function solve(model, preschedule, random_itr){ //run model and par
         random_itr2++;
     }
 
-    //if (random_itr == 0) console.log(model);
-    //console.log(model.variables);
+    const solved = solver.Solve(model);
 
-    const solved = solver.Solve(model)
-
-    var final_schedule = [];
+    let final_schedule = [];
     const added_classes = [];
 
     for (const [var_name, val] of Object.entries(solved)){
@@ -49,53 +99,13 @@ export async function solve(model, preschedule, random_itr){ //run model and par
     return {feasible: true, classes: final_schedule}
 }
 
-export default async function handler(req, res){
+export default async function handler(req, res) {
 
     try{
-        if (req.method != "POST"){
-            res.status(405).json({error_msg: "Must be 'POST' method!"});
-            return;
-        }
-
-        if (req.body == undefined || req.body == ""){
-            res.status(406).json({error_msg: "Missing request body"});
-            return;
-        }
-
-        var data = null;
-        try {
-            data = JSON.parse(req.body);
-        } catch (ex){
-            res.status(406).json({error_msg: "Invalid JSON format for request body"});
-            return;
-        }
-
-        if (data.avoid_times == undefined || data.preschedule == undefined) {
-            res.status(406).json({error_msg: "Body must contain 'current_schedule', 'current_schedule.avoid_times', and 'preschedule'!"});
-            return;
-        }
+        const data = validateReq(req, res);
+        if (!data) return;
         const avoid_times = data.avoid_times, preschedule = data.preschedule;
-        if (avoid_times.length != 5){
-            res.status(406).json({error_msg: "Malformatted avoid_times: Must have an entry for each day."});
-            return;
-        }
-        let avoid_total = 0;
-        for (let i = 0; i < avoid_times.length; i++){
-            avoid_total += avoid_times[i].length;
-            if (avoid_total > 20){
-                res.status(406).json({error_msg: "Exceeded the maximum number of avoid time ranges!"});
-                return;
-            }
-        }
-        if (preschedule.length > 12){
-            res.status(406).json({error_msg: "Exceeded the maximum number of classes!"});
-            return;
-        }
-        if (preschedule.length == 0){
-            res.status(406).json({error_msg: "Preschedule is empty."});
-            return;
-        }
-
+    
         const min_enroll_count = data.min_enroll_count == undefined ? preschedule.length : Math.min(data.min_enroll_count, preschedule.length);
         const model = { //initial model and constraints
             optimize: "cost",
@@ -131,20 +141,21 @@ export default async function handler(req, res){
 
             const title = preschedule[i].title.toUpperCase();
 
-            model.constraints["c" + i + "-enrolled"] = {min: 0, max: 1};
+            model.constraints["c" + i + "-enrolled"] = {min: 0, max: 1}; //instruct model to set this class
 
             for (let j = 0; j < Math.min(preschedule[i].offerings.length, 65); j++){ //each offering in class
                 const offering = preschedule[i].offerings[j];
-                const model_var = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
-                model_var["c" + i + "-enrolled"] = 1;
+                const model_variable = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
+                model_variable["c" + i + "-enrolled"] = 1;
 
+                //avoid waitlist
                 if (offering.full && avoid_waitlist) {
-                    model_var.cost_orig += 30; //avoid waitlist
+                    model_variable.cost_orig += 30;
                 }
 
                 //avoid professor
                 if (preschedule[i].avoid_instructors != undefined && preschedule[i].avoid_instructors.includes(offering.instructor)) {
-                    model_var.cost_orig += 30;
+                    model_variable.cost_orig += 75;
                 }
 
                 if (offering.meeting_times == undefined){ //if len 0, class is async
@@ -164,15 +175,15 @@ export default async function handler(req, res){
                     
                     for (let time_itr = mtime.start_time; time_itr <= mtime.end_time + 1; time_itr++){ //every 5 min chunk in 1 class's meeting
                         if (offering.quarter != null){ //if quarterly class
-                            model_var["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = 1; //model time (0-MAX_MODEL_TIME), also books 5 mins after class ends
+                            model_variable["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = 1; //model time (0-MAX_MODEL_TIME), also books 5 mins after class ends
                             model.constraints["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = {min: 0, max: 1};
                         } else {
                             if (quarters == null){ //no quarters to consider for any class
-                                model_var["d" + mtime.day + "-t" + time_itr] = 1; 
+                                model_variable["d" + mtime.day + "-t" + time_itr] = 1; 
                                 model.constraints["d" + mtime.day + "-t" + time_itr] = {min: 0, max: 1};
                             } else {
                                 for (let qi = 0; qi <= quarters; qi++){ //not a quarterly class, but takes all quarters in semester
-                                    model_var["d" + mtime.day + "-t" + time_itr + "-q" + qi] = 1; 
+                                    model_variable["d" + mtime.day + "-t" + time_itr + "-q" + qi] = 1; 
                                     model.constraints["d" + mtime.day + "-t" + time_itr + "-q" + qi] = {min: 0, max: 1};
                                 }
                             }
@@ -180,22 +191,20 @@ export default async function handler(req, res){
                     }
                 }
 
-                model_var.cost_orig += ut_count*50; 
+                model_variable.cost_orig += ut_count*50; 
 
-                model.variables["c" + i + "-o" + j] = model_var;
+                model.variables["c" + i + "-o" + j] = model_variable;
                 model.ints["c" + i + "-o" + j] = 1;
             }
         }
 
-        //console.log(model.variables);
-
         const schedules = [], start = (new Date()).getTime();
 
-        var random_itr = 0;
+        let random_itr = 0;
         while (schedules.length < 10 && random_itr < 30){ //make up to 10 variations by adding small bit of randomness to costs
             const solved = await solve(model, preschedule, random_itr);
 
-            var duplicate = false;
+            let duplicate = false;
 
             if (!solved.feasible){
                 res.status(200).json({conflictions: true, schedule_count: 0, schedules: []});
@@ -215,14 +224,10 @@ export default async function handler(req, res){
             random_itr++;
         }
 
-        //console.log("Took " + ((new Date()).getTime() - start) + "ms");
-
-        //res.status(200).json({conflictions: solved.feasible ? 0 : min_enroll_count - solved.final_schedule.length, final_schedule: solved.final_schedule});
         res.status(200).json({conflictions: false, schedule_count: schedules.length, schedules});
-
     }
     catch(ex){
-        res.status(500).json({error_msg: "Internal Server Error"});
+        res.status(500).json({error_msg: "Internal Server Error: " + ex});
         console.error(ex);
     }
 }

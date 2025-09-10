@@ -47,8 +47,6 @@ export class SchedulePage {
         this.srcdb = srcdb;
         this.semester = semester;
 
-        this.setScheduleData = () => {}; // stub for setter
-
         //define states
         [this.schedule_svg, this.setScheduleSVG] = useState(null);
         [this.loading, this.setLoading] = useState(false);
@@ -62,7 +60,7 @@ export class SchedulePage {
         [this.await_submit, this.setAwaitSubmit] = useState(false);
         [this.class_suggestions, this.setClassSuggestions] = useState([]);
         [this.color_key, this.setColorKey] = useState({});
-        [this.ut_editing, this.setUTEditing] = useState(null); //[day, index, top]
+        [this.ut_editing, this.setUTEditing] = useState(null); //unavailable times, format [day, index, top]
         [this.full_schedule_set, this.setFullScheduleSet] = useState([[]]);
         [this.selected_schedule_index, this.setSelectedScheduleIndex] = useState(0);
         [this.conflict_class, this.setConflictingClass] = useState(null);
@@ -76,7 +74,9 @@ export class SchedulePage {
 
         //effect hooks
         useEffect(this.onScheduleUpdateEffect, [this.schedule, this.preschedule, this.ut_editing, this.submitted]);
-        useEffect(() => this.submit(), [this.avoid_waitlist]);
+        useEffect(() => {
+            this.submit();
+        }, [this.avoid_waitlist]);
     }
 
     get schedule() {
@@ -274,6 +274,7 @@ export class SchedulePage {
 
     removePrescheduleClass = (cl) => {
         const nps = [];
+        const preschedule = this.preschedule;
         for (let j = 0; j < preschedule.length; j++) {
             if (preschedule[j].title != cl.title || preschedule[j].type != cl.type) nps.push(preschedule[j]);
         }
