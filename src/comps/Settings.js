@@ -1,13 +1,13 @@
 
 import { Checkbox, ListItem, ListItemText, Select, MenuItem } from '@mui/material';
 
-export default function Settings({semester, State}){
+export default function Settings({semester, state}){
 
     const semesters = ["Fall 2025", "Summer 2025", "Spring 2025", "Fall 2024", "Summer 2024", "Spring 2024", "Fall 2023"];
     const curr = semester == null ? "fall 2025" : semester.replace("-", " ").toLowerCase();
 
     const handleWaitlistChange = () => {
-        State.setAvoidWaitlist(!State.avoid_waitlist);
+        state.setAvoidWaitlist(!state.avoid_waitlist);
     }
 
     return (
@@ -30,7 +30,7 @@ export default function Settings({semester, State}){
             <ListItem style={{paddingLeft: "0", paddingBottom: "0", paddingTop: "10px"}}>
                 <Checkbox sx={{color: "white"}}
                 onClick={handleWaitlistChange}
-                checked={State.avoid_waitlist}>
+                checked={state.avoid_waitlist}>
                 </Checkbox>
                 <ListItemText onClick={handleWaitlistChange}>Avoid Waitlisted Classes</ListItemText>
             </ListItem>

@@ -1,41 +1,34 @@
 import styles from "../styles/Main.module.css";
 import { QUARTER_MAX } from "../lib/json/consts.js";
 
-export default function Schedule({width, height, State, scheduleClick, scheduleHover2, options}) {
+export default function Schedule({width, height, state, scheduleClick, options}) {
     const marginx_right = 5, marginx_left = 9000/width, marginy_top = 7, marginy_bottom = 2.5; //percent
     //to add back login link, set marginy_top=4, day text y=2.75%
     const w = (100 - (marginx_left + marginx_right)), h = (100 - (marginy_top + marginy_bottom));
     const daylen = 12.75; //10.75
     const height_scalar = 1.7;
     
-    const getX = (i) => {return (marginx_left + (i*w/5.0))}
-    const getY = (i) => {return ((i*h/daylen) + marginy_top)}
+    const getX = (i) => {return (marginx_left + (i*w/5.0))};
+    const getY = (i) => {return ((i*h/daylen) + marginy_top)};
 
-    var ut_editing = State.ut_editing;
+    let ut_editing = state.ut_editing;
 
     //hover over schedule time event listener
-    function scheduleHover(day, time){
-        if (ut_editing != null) {
-            const avoid_times = State.schedule.avoid_times;
-            const ut = avoid_times[ut_editing.day][ut_editing.index];
-            if ((ut_editing.top && time > ut[1]-4) || (!ut_editing.top && time < ut[0]+4)) return;
-            ut[ut_editing.top ? 0 : 1] = time;
-            avoid_times[ut_editing.day][ut_editing.index] = ut;
-
-            State.setSchedule({classes: State.schedule.classes, avoid_times});
-        }
+    function scheduleHover(day, time) {
+        state.scheduleHover(day, time);
     }
     
     //const colors = ["#666A86", "#788AA3", "#92B6B1", "#B2C9AB", "#E8DDB5"] //slate palette
 
-    //const State.color_key = {};
-    var color_count = Object.entries(State.color_key).length % 5;
+    let color_count = Object.entries(state.color_key).length % 5;
 
     const r = (
         <svg width={width} height={height_scalar*height}>
-            {State.schedule != null && (<>
+
+            {/* Draw numbers to select schedule variants on left side */}
+            {state.schedule && (<>
                 <g className={styles.avoid_times}>
-                {State.schedule.avoid_times.map((hours_list, i) => (<g key={"avoid-day-" + i}>
+                {state.schedule?.avoid_times?.map((hours_list, i) => (<g key={"avoid-day-" + i}>
                     {hours_list.map((hour_set, j) => {
                     //unavailable times display
                     if (hour_set.length < 2) return (<g key={"avoid-" + i + "-" + j}></g>);
@@ -60,22 +53,21 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
                 </g>))}
             </g>
 
-            {State.schedule != null && (<>
+            {state.schedule && (<>
             <g>
                 {/* Render classes on selected schedule */}
-                {State.schedule.classes.map((cl, i) => (<g key={"class-set-" + i}>
+                {state.schedule.classes.map((cl, i) => (<g key={"class-set-" + i}>
                     {cl.meeting_times.map(meeting_time => {
-                        var x = getX(meeting_time.day) + 0.14, y = getY(meeting_time.start_time/12.0) + 0.08;
-                        //style={{fill: colors[i % colors.length]}}
+                        let x = getX(meeting_time.day) + 0.14, y = getY(meeting_time.start_time/12.0) + 0.08;
 
-                        var color_num = State.color_key[cl.title]; //get color for class name if not already defined
+                        let color_num = state.color_key[cl.title]; //get color for class name if not already defined
                         if (color_num == undefined) {
                             color_num = color_count;
-                            State.color_key[cl.title] = color_num;
+                            state.color_key[cl.title] = color_num;
                             color_count = (color_count+1) % 5;
                         }
 
-                        var rect_width = (w/5) - 0.14;
+                        let rect_width = (w/5) - 0.14;
                         if (cl.quarter != null){
                             rect_width /= QUARTER_MAX;
                             x += rect_width*cl.quarter;
@@ -111,22 +103,23 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
             </g>
 
             {/* Render avoid times and set up event listeners for clicks */}
-            {(State.schedule != null && options.removeUT != undefined) && (<><g>
-                {State.schedule.avoid_times.map((hours_list, i) => (<g key={"avoid-x-day-" + i}>
+            {(state.schedule != null && options.removeUT != undefined) && (<>
+            <g>
+                {state.schedule.avoid_times.map((hours_list, i) => (<g key={"avoid-x-day-" + i}>
                     {hours_list.map((hour_set, j) => {
                     if (hour_set.length < 2) return (<g key={"avoid-x-" + i + "-" + j}></g>);
 
                     const topClick = () => {
-                        if (ut_editing == null) State.setUTEditing({day: i, index: j, top: true});
+                        if (ut_editing == null) state.setUTEditing({day: i, index: j, top: true});
                         else { //send schedule click, z index higher than click event listeners
-                            const coords = State.schedule.avoid_times[ut_editing.day][ut_editing.index];
+                            const coords = state.schedule.avoid_times[ut_editing.day][ut_editing.index];
                             scheduleClick(ut_editing.day, coords[0], true);
                         }
                     };
                     const bottomClick = () => {
-                        if (ut_editing == null) State.setUTEditing({day: i, index: j, top: false});
+                        if (ut_editing == null) state.setUTEditing({day: i, index: j, top: false});
                         else {
-                            const coords = State.schedule.avoid_times[ut_editing.day][ut_editing.index];
+                            const coords = state.schedule.avoid_times[ut_editing.day][ut_editing.index];
                             scheduleClick(ut_editing.day, coords[1], true);
                         }
                     };
@@ -169,6 +162,6 @@ export default function Schedule({width, height, State, scheduleClick, scheduleH
 
         </svg>
     );
-    State.setColorKey(State.color_key);
+    state.setColorKey(state.color_key);
     return r;
 }

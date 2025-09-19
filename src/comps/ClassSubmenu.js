@@ -2,10 +2,10 @@ import styles from "../styles/Main.module.css";
 import {getInstructorList } from "../lib/utils.js";
 import { name_map } from "../lib/json/name_map.js";
 import React from "react";
-import BackArrow from "../comps/BackArrow";
+import BackArrow from "./BackArrow.js";
 import { Checkbox, List, ListItem, ListItemText, Select, MenuItem } from '@mui/material';
 
-export default function ClassSubmenu({cl, State, submit}) {
+export default function ClassSubmenu({cl, state, submit}) {
     /*
     <div style={{display: "flex"}}>
                             <input type="checkbox" 
@@ -24,7 +24,7 @@ export default function ClassSubmenu({cl, State, submit}) {
         const selected = e.target.value;
         if (selected == 0) delete cl.enrolled_section;
         else cl.enrolled_section = selected;
-        State.setPreSchedule([...State.preschedule]);
+        state.setPreSchedule([...state.preschedule]);
         submit();
     }
 
@@ -33,7 +33,7 @@ export default function ClassSubmenu({cl, State, submit}) {
     return (<>
         <div style={{display: "flex", marginTop: "15px"}}>
             <BackArrow onClick={() => {
-                State.setClassSubmenu(null)
+                state.setClassSubmenu(null)
                 if (submit != undefined) submit();
             }}></BackArrow>
             <div style={{marginTop: "10px", marginLeft: "5px", fontSize: "18pt"}}>
@@ -76,7 +76,7 @@ export default function ClassSubmenu({cl, State, submit}) {
                             if (!checked) cl.avoid_instructors.splice(cl.avoid_instructors.indexOf(instructor), 1);
                             else cl.avoid_instructors.push(instructor);
 
-                            State.setPreSchedule([...State.preschedule]);
+                            state.setPreSchedule([...state.preschedule]);
                         }
 
                         const checked = cl.avoid_instructors == undefined || !cl.avoid_instructors.includes(instructor);
