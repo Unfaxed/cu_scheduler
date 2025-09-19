@@ -145,17 +145,17 @@ export default async function handler(req, res) {
 
             for (let j = 0; j < Math.min(preschedule[i].offerings.length, 65); j++){ //each offering in class
                 const offering = preschedule[i].offerings[j];
-                const model_variable = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
-                model_variable["c" + i + "-enrolled"] = 1;
+                const model_variables = {enrolled_count: 1, cost: 0, cost_orig: 0} //boolean cost
+                model_variables["c" + i + "-enrolled"] = 1;
 
                 //avoid waitlist
                 if (offering.full && avoid_waitlist) {
-                    model_variable.cost_orig += 30;
+                    model_variables.cost_orig += 30;
                 }
 
                 //avoid professor
                 if (preschedule[i].avoid_instructors != undefined && preschedule[i].avoid_instructors.includes(offering.instructor)) {
-                    model_variable.cost_orig += 75;
+                    model_variables.cost_orig += 75;
                 }
 
                 if (offering.meeting_times == undefined){ //if len 0, class is async
@@ -175,15 +175,15 @@ export default async function handler(req, res) {
                     
                     for (let time_itr = mtime.start_time; time_itr <= mtime.end_time + 1; time_itr++){ //every 5 min chunk in 1 class's meeting
                         if (offering.quarter != null){ //if quarterly class
-                            model_variable["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = 1; //model time (0-MAX_MODEL_TIME), also books 5 mins after class ends
+                            model_variables["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = 1; //model time (0-MAX_MODEL_TIME), also books 5 mins after class ends
                             model.constraints["d" + mtime.day + "-t" + time_itr + "-q" + offering.quarter] = {min: 0, max: 1};
                         } else {
                             if (quarters == null){ //no quarters to consider for any class
-                                model_variable["d" + mtime.day + "-t" + time_itr] = 1; 
+                                model_variables["d" + mtime.day + "-t" + time_itr] = 1; 
                                 model.constraints["d" + mtime.day + "-t" + time_itr] = {min: 0, max: 1};
                             } else {
                                 for (let qi = 0; qi <= quarters; qi++){ //not a quarterly class, but takes all quarters in semester
-                                    model_variable["d" + mtime.day + "-t" + time_itr + "-q" + qi] = 1; 
+                                    model_variables["d" + mtime.day + "-t" + time_itr + "-q" + qi] = 1; 
                                     model.constraints["d" + mtime.day + "-t" + time_itr + "-q" + qi] = {min: 0, max: 1};
                                 }
                             }
@@ -191,9 +191,9 @@ export default async function handler(req, res) {
                     }
                 }
 
-                model_variable.cost_orig += ut_count*50; 
+                model_variables.cost_orig += ut_count*50; 
 
-                model.variables["c" + i + "-o" + j] = model_variable;
+                model.variables["c" + i + "-o" + j] = model_variables;
                 model.ints["c" + i + "-o" + j] = 1;
             }
         }
