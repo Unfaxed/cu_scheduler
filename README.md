@@ -1,12 +1,12 @@
-# How to deploy/test
-
-After cloning the repo, run `npm run dev` to create a local instance of the tool
-
 # CU Scheduler
 
 Use this website to quickly build next semester's course schedule around your available times! Automatically avoid waitlisted classes and select preferred instructors. This is a personal project that I created to solve the difficulties of creating a class schedule, it is not affiliated with CU Boulder.
 
 See the deployed project at [cuscheduler.com](https://www.cuscheduler.com)!
+
+# How to deploy/test
+
+After cloning the repo, run `npm run dev` to create a local instance of the tool
 
 ## Details
 
