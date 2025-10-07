@@ -1,3 +1,6 @@
+# How to deploy/test
+
+After cloning the repo, run `npm run dev` to create a local instance of the tool
 
 # CU Scheduler
 
