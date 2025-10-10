@@ -201,7 +201,7 @@ export default async function handler(req, res) {
         const schedules = [], start = (new Date()).getTime();
 
         let random_itr = 0;
-        while (schedules.length < 10 && random_itr < 30){ //make up to 10 variations by adding small bit of randomness to costs
+        while (schedules.length < 12 && random_itr < 30){ //make up to 10 variations by adding small bit of randomness to costs
             const solved = await solve(model, preschedule, random_itr);
 
             let duplicate = false;
