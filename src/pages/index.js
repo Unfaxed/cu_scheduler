@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import styles from "../styles/Main.module.css";
 import Image from "next/image";
-import { removeOverlappingUT, UTCount, groupScheduleClasses, prescheduleClassCount } from "../lib/utils.js";
+import { removeOverlappingUT, groupScheduleClasses, prescheduleClassCount } from "../lib/utils.js";
 import { lookup_map } from "../lib/json/lookup_map.js";
 import { name_map } from "../lib/json/name_map.js";
 import { Checkbox, FormControlLabel, Typography } from "@mui/material";
@@ -358,7 +358,7 @@ export class SchedulePage {
             this.setStatusText("");
 
             if (this.conflict_class != null){
-                if (this.prescheduleClassCount(preschedule, this.conflict_class) == 0) this.setConflictingClass(null);
+                if (prescheduleClassCount(preschedule, this.conflict_class) == 0) this.setConflictingClass(null);
             }
 
         } else { //at least 1 class has to be dropped from the preschedule list

@@ -37,14 +37,6 @@ export function timeString(day, start, end){ //model time
     return day_str[day] + " " + (((Math.trunc(start/12)+7) % 12)+1) + ":" + twoDigit((start % 12) * 5) + (start >= 60 ? "p" : "a") + "-" + (((Math.trunc(end/12)+7) % 12)+1) + ":" + twoDigit((end % 12) * 5) + (end >= 60 ? "p" : "a");
 }
 
-export function UTCount(avoid_times){
-    var count = 0;
-    for (let i = 0; i < avoid_times.length; i++){
-        count += avoid_times[i].length;
-    }
-    return count;
-}
-
 export function groupScheduleClasses(classes){ //[{name: "CSCI 1200", type: "REC"}, {name: "CSCI 1200", type: "LEC"}] -> [{name: "CSCI 1200", types: ["LEC", "REC"]}], +other data, assumed unique
     const cl_map = {};
     for (let i =0; i < classes.length; i++){

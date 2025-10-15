@@ -1,5 +1,3 @@
-import { SEMESTER_END, SEMESTER_START } from "./json/consts";
-
 export function CUtoModelTime(x){ //900 -> 12
     let mins = x % 100, hours = Math.trunc(x / 100);
     return ((hours-8)*12) + Math.trunc(mins/5);
@@ -77,8 +75,19 @@ export async function getPreScheduleClass(name, srcdb) { //fetch class data from
         }
 
         const cl_offering = {instructor, type, section, full, meeting_times};
-        if (!["01", "05", "06", "08"].includes(offering.start_date.split("-")[1])) cl_offering['quarter'] = 1;
-        else if (!["05", "07", "08", "12"].includes(offering.end_date.split("-")[1])) cl_offering['quarter'] = 0;
+
+        //check if class is only offered for a quarter
+        const offering_start = new Date(offering.start_date),
+            offering_end = new Date(offering.end_date),
+            fall_start = new Date(offering_start.getFullYear() + "-08-20");
+            
+        const spring = offering_end < fall_start;
+        const threshold = 20;
+        const semester_start = spring ? new Date(offering_start.getFullYear() + "-01-08") : new Date(offering_start.getFullYear() + "-08-20");
+        const semester_end = spring ? new Date(offering_end.getFullYear() + "-05-02") : new Date(offering_end.getFullYear() + "-12-01");
+
+        if (Math.abs(semester_start - offering_start) / 86400000 > threshold) cl_offering['quarter'] = 1;
+        else if (Math.abs(semester_end - offering_end) / 86400000 > threshold) cl_offering['quarter'] = 0;
 
         preschedule[preschedule_index].offerings.push(cl_offering)
 
