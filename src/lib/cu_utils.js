@@ -89,7 +89,7 @@ export async function getPreScheduleClass(name, srcdb) { //fetch class data from
         if (Math.abs(semester_start - offering_start) / 86400000 > threshold) cl_offering['quarter'] = 1;
         else if (Math.abs(semester_end - offering_end) / 86400000 > threshold) cl_offering['quarter'] = 0;
 
-        preschedule[preschedule_index].offerings.push(cl_offering)
+        preschedule[preschedule_index].offerings.push(cl_offering);
 
     }
     return preschedule;
