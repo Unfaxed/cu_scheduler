@@ -29,8 +29,14 @@ export async function getPreScheduleClass(name, srcdb) { //fetch class data from
     //spring classes released oct 12
     const res1 = await fetch("https://classes.colorado.edu/api/?page=fose&route=search&alias=" + name.toLowerCase(), {
         method: "POST",
+        headers: {
+            "Accept": "application/json", 
+            "Prefer": "return=representation",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0",
+        },
         body: '{"other":{"srcdb":"' + srcdb + '"},"criteria":[{"field":"alias","value":"' + name.toLowerCase() + '"}]}'
     });
+
     const res = await res1.json();
     
     const types = [];
