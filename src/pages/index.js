@@ -33,7 +33,6 @@ export function getServerSideProps(context){
 
     return {
         props: {
-            analytics: !process.env.DEV_ENV,
             srcdb,
             semester
         }
@@ -42,8 +41,7 @@ export function getServerSideProps(context){
 
 export class SchedulePage {
 
-    constructor ({analytics, srcdb, semester}) {
-        this.analytics = analytics;
+    constructor ({ srcdb, semester }) {
         this.srcdb = srcdb;
         this.semester = semester;
 
@@ -371,9 +369,9 @@ export class SchedulePage {
 
 }
 
-export default function Index({analytics, srcdb, semester}) {
+export default function Index({ srcdb, semester}) {
 
-    const schedulePage = new SchedulePage({analytics, srcdb, semester});
+    const schedulePage = new SchedulePage({ srcdb, semester});
 
     return(
         <>
@@ -381,14 +379,6 @@ export default function Index({analytics, srcdb, semester}) {
             <link rel="icon" href="/favicon.png"></link>
             <title>#1 CU Boulder Schedule Builder | Make Your Schedule Perfect in only 60 Seconds</title>
             <meta name="description" content="Cut down on stress and supercharge your sleep schedule with an optimized class schedule! Fit your courses around your work schedule and personal time."></meta>
-            {analytics && (
-                <>
-                <script async src="https://www.googletagmanager.com/gtag/js?id=G-N7V5MK9YDW"></script>
-                <script>
-                  {"window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}; gtag('js', new Date()); gtag('config', 'G-N7V5MK9YDW');"}
-                </script>
-                </>
-            )}
         </Head>
         <div className={styles.main_container}>
             {schedulePage.menu_shown && (<><div className={styles.menu1}>
