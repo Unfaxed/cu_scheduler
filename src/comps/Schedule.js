@@ -1,7 +1,11 @@
 import styles from "../styles/Main.module.css";
 import { QUARTER_MAX } from "../lib/json/consts.js";
+import { useState } from "react";
 
 export default function Schedule({width, height, state, scheduleClick, options}) {
+
+    const [color_key, setColorKey] = useState({});
+
     const marginx_right = 5, marginx_left = 9000/width, marginy_top = 7, marginy_bottom = 2.5; //percent
     //to add back login link, set marginy_top=4, day text y=2.75%
     const w = (100 - (marginx_left + marginx_right)), h = (100 - (marginy_top + marginy_bottom));
@@ -20,7 +24,7 @@ export default function Schedule({width, height, state, scheduleClick, options})
     
     //const colors = ["#666A86", "#788AA3", "#92B6B1", "#B2C9AB", "#E8DDB5"] //slate palette
 
-    let color_count = Object.entries(state.color_key).length % 5;
+    let color_count = Object.entries(color_key).length % 5;
 
     const r = (
         <svg width={width} height={height_scalar*height}>
@@ -60,10 +64,10 @@ export default function Schedule({width, height, state, scheduleClick, options})
                     {cl.meeting_times.map(meeting_time => {
                         let x = getX(meeting_time.day) + 0.14, y = getY(meeting_time.start_time/12.0) + 0.08;
 
-                        let color_num = state.color_key[cl.title]; //get color for class name if not already defined
+                        let color_num = color_key[cl.title]; //get color for class name if not already defined
                         if (color_num == undefined) {
                             color_num = color_count;
-                            state.color_key[cl.title] = color_num;
+                            color_key[cl.title] = color_num;
                             color_count = (color_count+1) % 5;
                         }
 
@@ -162,6 +166,7 @@ export default function Schedule({width, height, state, scheduleClick, options})
 
         </svg>
     );
-    state.setColorKey(state.color_key);
+
+    if (!color_key) setColorKey(color_key);
     return r;
 }

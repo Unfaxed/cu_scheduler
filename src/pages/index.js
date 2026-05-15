@@ -57,7 +57,6 @@ export class SchedulePage {
         [this.submitted, this.setSubmitted] = useState(false);
         [this.await_submit, this.setAwaitSubmit] = useState(false);
         [this.class_suggestions, this.setClassSuggestions] = useState([]);
-        [this.color_key, this.setColorKey] = useState({});
         [this.ut_editing, this.setUTEditing] = useState(null); //unavailable times, format [day, index, top]
         [this.full_schedule_set, this.setFullScheduleSet] = useState([[]]);
         [this.selected_schedule_index, this.setSelectedScheduleIndex] = useState(0);
@@ -472,21 +471,25 @@ export default function Index({ srcdb, semester}) {
                 <div className={styles.checklist_element} key={"checklist-group-" + i}>
                     <span style={{fontSize: "20pt"}}><b>{checklist.title }</b>{": " + name_map[checklist.title]}</span>
                     <div>
-                        {checklist.sections.map(section => (
-                            <FormControlLabel label={<Typography variant="label2">{"Section " + section}</Typography>} control = {
-                            <Checkbox id={"checkbox-" + checklist.title + " " + section} 
-                            size="medium" sx={{color: "white"}} 
-                            defaultChecked={schedulePage.checklist_selected.includes(checklist.title + " " + section)} 
-                            onChange={() => {
-                                const checklist_selected = schedulePage.checklist_selected;
-                                if (checklist_selected.includes(checklist.title + " " + section)){
-                                    schedulePage.setChecklistSelected(checklist_selected.filter(el => el != (checklist.title + " " + section)));
-                                    return;
-                                } else {
-                                    checklist_selected.push(checklist.title + " " + section);
-                                    schedulePage.setChecklistSelected([...checklist_selected]);
-                                }
-                            }}></Checkbox>}></FormControlLabel>
+                        {checklist.sections.map((section, j) => (
+                            <FormControlLabel 
+                                label={<Typography variant="label2">{"Section " + section}</Typography>} 
+                                key={`checklist-group-${i}-${j}`}
+                                control = {
+                                    <Checkbox id={"checkbox-" + checklist.title + " " + section} 
+                                    size="medium" sx={{color: "white"}} 
+                                    defaultChecked={schedulePage.checklist_selected.includes(checklist.title + " " + section)} 
+                                    onChange={() => {
+                                        const checklist_selected = schedulePage.checklist_selected;
+                                        if (checklist_selected.includes(checklist.title + " " + section)){
+                                            schedulePage.setChecklistSelected(checklist_selected.filter(el => el != (checklist.title + " " + section)));
+                                            return;
+                                        } else {
+                                            checklist_selected.push(checklist.title + " " + section);
+                                            schedulePage.setChecklistSelected([...checklist_selected]);
+                                        }
+                                    }}></Checkbox>}>
+                            </FormControlLabel>
                         ))}
                     </div>
                 </div>
